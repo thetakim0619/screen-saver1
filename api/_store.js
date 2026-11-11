@@ -2,8 +2,11 @@
 // Upstash(KV_REST_API_*)가 있으면 Redis를, 없으면 인메모리를 쓴다(로컬 테스트용).
 'use strict';
 
-const URL = process.env.KV_REST_API_URL;
-const TOKEN = process.env.KV_REST_API_TOKEN;
+// 이름을 KV_* 로 넣었든 Upstash 기본(UPSTASH_*)으로 넣었든 둘 다 인식한다.
+// 혹시 값에 따옴표나 공백이 섞여 들어가도 벗겨낸다.
+function clean(v) { return v ? String(v).trim().replace(/^["']|["']$/g, '') : v; }
+const URL = clean(process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL);
+const TOKEN = clean(process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN);
 const TTL = 60 * 60 * 24 * 2; // 2일 뒤 방 자동 소멸
 const mem = new Map();        // 인메모리 폴백
 
