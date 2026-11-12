@@ -83,21 +83,19 @@ function finishMission(success) {
   // 실패면 setActive 유지, 곧 hit/recover가 온다
 }
 
-// ---- 화면 깨짐 연출 (실사 이미지 + 애니메이션) ----
-// 이미지는 서버의 /fx 에서 불러오고, 검은 배경은 알파로 투명 처리돼 있어 실제 화면 위에 자연스럽게 얹힌다.
-const FX_IMG = {
-  crack: ['fx/crack1.webp', 'fx/crack2.webp', 'fx/crack3.webp'],
-  glitch: ['fx/glitch.webp'],
-  melt: ['fx/melt.webp'],
-};
-(function preloadFx() { // 공격이 오면 즉시 뜨도록 미리 받아 캐시
-  for (const arr of Object.values(FX_IMG)) arr.forEach((u) => { const i = new Image(); i.src = u; });
+// ---- 화면 깨짐 연출 (실사 투명 영상) ----
+// 서버 /fx 의 투명 WebM(VP8 알파). 검은 배경은 투명이라 실제 화면 위에 그대로 얹힌다.
+// 유리/멜트=한 번 재생 후 마지막 프레임 정지, 글리치=반복.
+const FX_VID = { crack: 'fx/crack.webm', glitch: 'fx/glitch.webm', melt: 'fx/melt.webm' };
+(function preloadFx() { // 공격이 오면 바로 뜨도록 미리 받아 캐시
+  for (const u of Object.values(FX_VID)) { const v = document.createElement('video'); v.preload = 'auto'; v.muted = true; v.src = u; }
 })();
-function imgLayer(url, cls) {
-  const d = document.createElement('div');
-  d.className = 'fximg ' + cls;
-  d.style.backgroundImage = `url("${url}")`;
-  return d;
+function videoLayer(url, loop) {
+  const v = document.createElement('video');
+  v.className = 'fximg'; v.src = url; v.muted = true; v.autoplay = true; v.loop = !!loop;
+  v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('autoplay', '');
+  v.play && v.play().catch(() => {});
+  return v;
 }
 
 function playEffect(kind) {
@@ -110,20 +108,9 @@ function playEffect(kind) {
       <div>잠시만 기다리거나 복구 문장을 입력하세요.</div>
       <div class="fake">* 게임 연출입니다 (실제 오류 아님) · ESC로 닫기</div></div>`;
   } else if (kind === 'crack' || kind === 'glitch' || kind === 'melt') {
-    const pool = FX_IMG[kind];
-    const url = pool[Math.floor(Math.random() * pool.length)];
-    if (kind === 'crack') {
-      const flash = document.createElement('div'); flash.className = 'fx-flash flashHit';
-      fx.appendChild(flash);
-      fx.appendChild(imgLayer(url, 'crackIn'));
-      void fx.offsetWidth; fx.classList.add('shake'); // 리플로우 후 흔들림 시작
-    } else if (kind === 'glitch') {
-      fx.appendChild(imgLayer(url, 'glitchAnim'));
-    } else {
-      fx.appendChild(imgLayer(url, 'meltAnim'));
-    }
+    fx.appendChild(videoLayer(FX_VID[kind], kind === 'glitch')); // 글리치만 반복
   } else {
-    fx.appendChild(imgLayer(FX_IMG.glitch[0], 'glitchAnim'));
+    fx.appendChild(videoLayer(FX_VID.glitch, true));
   }
   // 안전장치: 복구 못 해도 일정 시간 뒤 자동 해제 (최대 8초)
   clearTimeout(effectTimer);
