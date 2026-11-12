@@ -1,0 +1,7 @@
+{
+  "name": "screen-war-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SCREEN WAR 서버 (Vercel 서버리스 + Upstash Redis)",
+  "engines": { "node": ">=18" }
+}

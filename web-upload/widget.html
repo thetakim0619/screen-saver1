@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<style>
+  :root { --bg:#141414; --card:#1e1e1e; --line:#2e2e2e; --fg:#eaeaea; --mut:#8a8a8a;
+          --red:#e4342a; --blue:#3b6fe0; --gold:#d8a21a; }
+  * { box-sizing:border-box; font-family:'Pretendard','Malgun Gothic',system-ui,sans-serif; }
+  html,body { margin:0; height:100%; background:transparent; color:var(--fg);
+              -webkit-user-select:none; cursor:default; }
+  #app { height:100%; background:var(--bg); border:1px solid var(--line); border-radius:14px;
+         display:flex; flex-direction:column; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.5); }
+  .bar { -webkit-app-region:drag; padding:10px 12px; display:flex; align-items:center; gap:8px;
+         background:var(--card); border-bottom:1px solid var(--line); }
+  .bar .dot { width:8px; height:8px; border-radius:50%; background:#555; }
+  .bar .dot.on { background:#3ac267; }
+  .bar b { font-size:13px; letter-spacing:.5px; }
+  .bar .me { margin-left:auto; font-size:11px; color:var(--mut); -webkit-app-region:no-drag; }
+  .wrap { padding:12px; overflow:auto; flex:1; }
+  .stat { display:flex; gap:8px; margin-bottom:10px; }
+  .stat .box { flex:1; background:var(--card); border:1px solid var(--line); border-radius:10px;
+               padding:8px 10px; }
+  .stat .k { font-size:10px; color:var(--mut); }
+  .stat .v { font-size:18px; font-weight:700; }
+  .v.cred { color:var(--gold); }
+  .v.hp { color:var(--red); }
+  .sec { font-size:10px; color:var(--mut); margin:12px 0 6px; letter-spacing:1px; }
+  .roster { display:flex; flex-direction:column; gap:4px; }
+  .pl { display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line);
+        border-radius:8px; padding:6px 8px; font-size:12px; cursor:pointer; }
+  .pl.sel { border-color:var(--red); }
+  .pl .nm { flex:1; }
+  .pl .hpbar { width:46px; height:5px; background:#333; border-radius:3px; overflow:hidden; }
+  .pl .hpbar i { display:block; height:100%; background:var(--red); }
+  .pl .me-tag { font-size:9px; color:var(--mut); }
+  .btns { display:flex; gap:6px; margin-top:4px; }
+  button { flex:1; border:none; border-radius:9px; padding:10px; font-size:12px; font-weight:700;
+           color:#fff; cursor:pointer; }
+  .atk-all { background:var(--red); }
+  .atk-one { background:#b5261d; }
+  .sh-block { background:#36404f; }
+  .sh-reflect { background:var(--blue); }
+  .buy { background:var(--gold); color:#1a1a1a; }
+  input { width:100%; background:#101010; border:1px solid var(--line); color:var(--fg);
+          border-radius:8px; padding:8px; font-size:12px; margin-top:6px; }
+  .custom { display:none; }
+  .custom.show { display:block; }
+  #toast { position:absolute; left:12px; right:12px; bottom:10px; background:#000; border:1px solid var(--line);
+           border-radius:8px; padding:8px 10px; font-size:11px; opacity:0; transition:.2s; pointer-events:none; }
+  #toast.show { opacity:1; }
+  /* 설정 화면 */
+  #setup { display:none; padding:14px; }
+  #setup.show { display:block; }
+  #setup h3 { margin:4px 0 2px; font-size:14px; }
+  #setup p { font-size:11px; color:var(--mut); margin:0 0 10px; }
+  #setup button { margin-top:12px; background:var(--red); }
+  .hint { font-size:10px; color:var(--mut); margin-top:10px; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="bar">
+    <span class="dot" id="dot"></span><b>SCREEN WAR</b>
+    <span class="me" id="meName">—</span>
+  </div>
+
+  <!-- 설정 -->
+  <div id="setup">
+    <h3>입장</h3>
+    <p>내 이름과 방 코드만 넣으면 됩니다. 친구들끼리 같은 코드를 쓰면 한 방에 모입니다.</p>
+    <input id="su-name" placeholder="내 이름" maxlength="16" />
+    <div style="display:flex; gap:6px; align-items:center;">
+      <input id="su-room" placeholder="방 코드" style="flex:1" />
+      <button id="su-make" style="flex:0 0 auto; width:74px; margin-top:6px; background:#36404f;">방 만들기</button>
+    </div>
+    <button id="su-save">입장하기</button>
+    <div class="hint">방을 새로 만들려면 "방 만들기"를 누르고, 생긴 코드를 친구들에게 공유하세요.<br>
+      보스키: Ctrl+Shift+` (전부 숨김/복귀) · 비상 해제: Ctrl+Shift+Esc</div>
+  </div>
+
+  <!-- 게임 -->
+  <div class="wrap" id="game" style="display:none">
+    <div class="stat">
+      <div class="box"><div class="k">공격권</div><div class="v cred" id="cred">0</div></div>
+      <div class="box"><div class="k">내 체력</div><div class="v hp" id="hp">100</div></div>
+    </div>
+
+    <div class="sec">상대 (지정 공격하려면 클릭)</div>
+    <div class="roster" id="roster"></div>
+
+    <div class="sec">공격</div>
+    <input class="custom" id="customText" placeholder="지정 공격 미션 문장 (비우면 랜덤)" maxlength="40" />
+    <div class="btns">
+      <button class="atk-all" id="atkAll">전체 공격</button>
+      <button class="atk-one" id="atkOne">지정 공격</button>
+    </div>
+
+    <div class="sec">방어 (미리 걸어두기)</div>
+    <div class="btns">
+      <button class="sh-block" id="shBlock">막기 방패</button>
+      <button class="sh-reflect" id="shReflect">반사 방패</button>
+    </div>
+
+    <div class="sec">공격권 부족하면</div>
+    <div class="btns">
+      <button class="buy" id="buy">현질 +3 (프로토타입)</button>
+    </div>
+  </div>
+  <div id="toast"></div>
+</div>
+<script src="widget.js"></script>
+</body>
+</html>
