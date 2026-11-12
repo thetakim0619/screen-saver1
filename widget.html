@@ -48,6 +48,27 @@
           border-radius:7px; padding:7px; font-size:11px; margin-top:5px; }
   select { width:100%; background:#111214; border:1px solid var(--line); color:var(--fg);
            border-radius:7px; padding:6px; font-size:11px; margin-bottom:5px; }
+  /* 연출 미리보기 선택기 */
+  .fxpick { display:flex; gap:4px; margin-bottom:6px; }
+  .fxitem { flex:1; border:1.5px solid var(--line); border-radius:6px; overflow:hidden; cursor:pointer;
+            background:#0d0e10; display:flex; flex-direction:column; align-items:center; }
+  .fxitem.sel { border-color:var(--red); }
+  .fxthumb { width:100%; height:22px; position:relative; overflow:hidden; }
+  .fxitem .lbl { font-size:7px; color:var(--mut); padding:2px 0 3px; line-height:1; }
+  .fxitem.sel .lbl { color:#fff; }
+  .t-rand { background:conic-gradient(from 0deg,#e4342a,#d8a21a,#3ac267,#3b6fe0,#e4342a); }
+  .t-rand::after { content:'?'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+                   font-size:11px; font-weight:700; color:#fff; text-shadow:0 1px 2px #000; }
+  .t-glitch { background:repeating-linear-gradient(0deg,rgba(255,0,60,.55) 0 2px,rgba(0,255,220,.55) 2px 4px); }
+  .t-glitch::after { content:''; position:absolute; inset:0;
+                     background:linear-gradient(90deg,rgba(255,0,60,.6),transparent 40%,transparent 60%,rgba(0,180,255,.6)); }
+  .t-melt { background:#17171e; }
+  .t-melt::after { content:''; position:absolute; left:0; right:0; top:0; height:58%; background:#3a3f4d;
+                   border-radius:0 0 45% 45%/0 0 100% 100%; }
+  .t-bsod { background:#0078d7; }
+  .t-bsod::after { content:':('; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+                   color:#fff; font-size:10px; }
+  .t-crack { background:#15151a; }
   .custom { display:none; } .custom.show { display:block; }
   #toast { position:absolute; left:9px; right:9px; bottom:8px; background:#000; border:1px solid var(--line);
            border-radius:7px; padding:7px 9px; font-size:10px; opacity:0; transition:.2s; pointer-events:none; }
@@ -88,14 +109,14 @@
       </div>
       <div class="sec">상대 (지정 공격하려면 클릭)</div>
       <div class="roster" id="roster"></div>
-      <div class="sec">공격</div>
-      <select id="fx" title="상대 화면에 뜰 연출">
-        <option value="">연출: 랜덤</option>
-        <option value="crack">유리 깨짐</option>
-        <option value="glitch">글리치</option>
-        <option value="melt">녹아내림</option>
-        <option value="bsod">블루스크린</option>
-      </select>
+      <div class="sec">공격 연출 (상대 화면에 뜰 모양)</div>
+      <div class="fxpick" id="fxpick">
+        <div class="fxitem sel" data-fx="" title="랜덤"><span class="fxthumb t-rand"></span><span class="lbl">랜덤</span></div>
+        <div class="fxitem" data-fx="crack" title="유리 깨짐"><span class="fxthumb t-crack"><svg viewBox="0 0 34 22" preserveAspectRatio="none" style="width:100%;height:100%"><g stroke="rgba(255,255,255,.85)" stroke-width="0.7" fill="none"><path d="M17 11 L5 2"/><path d="M17 11 L31 4"/><path d="M17 11 L32 15"/><path d="M17 11 L21 21"/><path d="M17 11 L6 20"/><path d="M17 11 L1 12"/></g><circle cx="17" cy="11" r="1.1" fill="#fff"/></svg></span><span class="lbl">유리</span></div>
+        <div class="fxitem" data-fx="glitch" title="글리치"><span class="fxthumb t-glitch"></span><span class="lbl">글리치</span></div>
+        <div class="fxitem" data-fx="melt" title="녹아내림"><span class="fxthumb t-melt"></span><span class="lbl">멜트</span></div>
+        <div class="fxitem" data-fx="bsod" title="블루스크린"><span class="fxthumb t-bsod"></span><span class="lbl">블루</span></div>
+      </div>
       <input class="custom" id="customText" placeholder="지정 공격 문장 (비우면 랜덤)" maxlength="40" />
       <div class="btns">
         <button class="atk-all" id="atkAll">전체 공격</button>
