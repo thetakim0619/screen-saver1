@@ -46,6 +46,8 @@
   .buy { background:var(--gold); color:#1a1a1a; }
   input { width:100%; background:#111214; border:1px solid var(--line); color:var(--fg);
           border-radius:7px; padding:7px; font-size:11px; margin-top:5px; }
+  select { width:100%; background:#111214; border:1px solid var(--line); color:var(--fg);
+           border-radius:7px; padding:6px; font-size:11px; margin-bottom:5px; }
   .custom { display:none; } .custom.show { display:block; }
   #toast { position:absolute; left:9px; right:9px; bottom:8px; background:#000; border:1px solid var(--line);
            border-radius:7px; padding:7px 9px; font-size:10px; opacity:0; transition:.2s; pointer-events:none; }
@@ -87,6 +89,13 @@
       <div class="sec">상대 (지정 공격하려면 클릭)</div>
       <div class="roster" id="roster"></div>
       <div class="sec">공격</div>
+      <select id="fx" title="상대 화면에 뜰 연출">
+        <option value="">연출: 랜덤</option>
+        <option value="crack">유리 깨짐</option>
+        <option value="glitch">글리치</option>
+        <option value="melt">녹아내림</option>
+        <option value="bsod">블루스크린</option>
+      </select>
       <input class="custom" id="customText" placeholder="지정 공격 문장 (비우면 랜덤)" maxlength="40" />
       <div class="btns">
         <button class="atk-all" id="atkAll">전체 공격</button>

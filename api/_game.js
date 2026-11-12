@@ -110,7 +110,8 @@ function nextAttackId() {
 
 // 공격 시도. victims 목록 각각에 대해 '미션을 띄워라'는 이벤트를 만든다.
 // 방패(block/reflect)는 미션이 뜨기 전에 먼저 소모된다.
-function attack(room, attackerId, { kind, targetId, customText }, now = Date.now()) {
+function attack(room, attackerId, { kind, targetId, customText, effect }, now = Date.now()) {
+  const fx = ['crack', 'glitch', 'melt', 'bsod'].includes(effect) ? effect : null; // 공격자가 고른 연출(없으면 랜덤)
   const attacker = room.players[attackerId];
   if (!attacker) return { ok: false, reason: 'no_attacker' };
   maybeDailyReset(attacker, now);
@@ -156,6 +157,7 @@ function attack(room, attackerId, { kind, targetId, customText }, now = Date.now
           kind,
           reflected: true,
           purchasedAttack: spent.purchased,
+          effect: fx,
           mission,
         });
         events.push({ t: 'reflected', by: v.id, to: attacker.id });
@@ -173,6 +175,7 @@ function attack(room, attackerId, { kind, targetId, customText }, now = Date.now
       from: kind === 'target' ? attacker.id : null,
       kind,
       purchasedAttack: spent.purchased,
+      effect: fx,
       mission,
     });
   }

@@ -18,7 +18,7 @@ module.exports = async (req, res) => {
 
   let events = [];
   if (b.t === 'attack') {
-    const r = G.attack(room, pid, { kind: b.kind, targetId: b.targetId, customText: b.customText });
+    const r = G.attack(room, pid, { kind: b.kind, targetId: b.targetId, customText: b.customText, effect: b.effect });
     if (!r.ok) { await saveRoom(code, room); return send(res, 400, { error: reasonText(r.reason) }); }
     events = routeEvents(room, pid, r.events);
   } else if (b.t === 'resolve') {

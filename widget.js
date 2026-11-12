@@ -1,6 +1,6 @@
 'use strict';
 const $ = (id) => document.getElementById(id);
-let me = null, roster = [], selected = null, config = null;
+let me = null, roster = [], selected = null, config = null, myCred = 0;
 
 const EXPANDED = { w: 212, h: 340 };
 const COLLAPSED = { w: 212, h: 34 };
@@ -60,7 +60,8 @@ window.api.onServer((m) => {
     roster = m.roster || [];
     if (m.you) {
       if (!me) { me = m.you.id; $('meName').textContent = m.you.name; } // 입장 신호를 놓쳤어도 복구
-      $('cred').textContent = m.you.credits + m.you.purchased;
+      myCred = m.you.credits + m.you.purchased;
+      $('cred').textContent = myCred;
       $('hp').textContent = m.you.hp;
       showSetup(false); // 내 정보가 있으면 게임 화면을 띄운다
     }
@@ -82,10 +83,20 @@ $('su-save').onclick = () => {
   if (!room || !name) return toast('이름과 방 코드를 넣으세요');
   window.api.cmd({ t: 'save-config', room, name });
 };
-$('atkAll').onclick = () => window.api.cmd({ t: 'attack', kind: 'broadcast' });
+function fxLabel() { const o = $('fx').options[$('fx').selectedIndex]; return o ? o.text.replace('연출: ', '') : '랜덤'; }
+$('atkAll').onclick = () => {
+  if (myCred < 1) return toast('공격권이 없습니다');
+  window.api.cmd({ t: 'attack', kind: 'broadcast', effect: $('fx').value });
+  myCred -= 1; $('cred').textContent = myCred; // 즉시 반영(곧 서버값으로 갱신)
+  toast(`전체 공격 보냄 → (${fxLabel()})`);
+};
 $('atkOne').onclick = () => {
   if (!selected) return toast('상대를 먼저 클릭하세요');
-  window.api.cmd({ t: 'attack', kind: 'target', targetId: selected, customText: $('customText').value.trim() });
+  if (myCred < 1) return toast('공격권이 없습니다');
+  const name = (roster.find((p) => p.id === selected) || {}).name || '상대';
+  window.api.cmd({ t: 'attack', kind: 'target', targetId: selected, customText: $('customText').value.trim(), effect: $('fx').value });
+  myCred -= 1; $('cred').textContent = myCred;
+  toast(`${name}에게 공격 보냄 → (${fxLabel()})`);
 };
 $('shBlock').onclick = () => window.api.cmd({ t: 'shield', mode: 'block' });
 $('shReflect').onclick = () => window.api.cmd({ t: 'shield', mode: 'reflect' });

@@ -145,7 +145,7 @@ function startRecover(m) {
 // ---- 서버 메시지 ----
 window.api.onServer((m) => {
   if (m.t === 'incoming') startMission(m);
-  else if (m.t === 'hit') playEffect(m.effect);
+  else if (m.t === 'hit') playEffect((cur && cur.effect) ? cur.effect : m.effect); // 공격자가 고른 연출 우선
   else if (m.t === 'recover') startRecover(m);
 });
 window.api.onForceClear(() => clearAll());

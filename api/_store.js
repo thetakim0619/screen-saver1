@@ -63,7 +63,8 @@ function toClientMsg(room, e) {
     return {
       t: 'incoming', attackId: e.attackId, kind: e.kind,
       from: e.from ? (room.players[e.from]?.name || null) : null,
-      reflected: !!e.reflected, purchasedAttack: !!e.purchasedAttack, mission: e.mission,
+      reflected: !!e.reflected, purchasedAttack: !!e.purchasedAttack,
+      effect: e.effect || null, mission: e.mission,
     };
   }
   if (e.t === 'recover') return { t: 'recover', mission: e.mission };
