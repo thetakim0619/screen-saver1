@@ -59,8 +59,10 @@ window.api.onServer((m) => {
   else if (m.t === 'state') {
     roster = m.roster || [];
     if (m.you) {
+      if (!me) { me = m.you.id; $('meName').textContent = m.you.name; } // 입장 신호를 놓쳤어도 복구
       $('cred').textContent = m.you.credits + m.you.purchased;
       $('hp').textContent = m.you.hp;
+      showSetup(false); // 내 정보가 있으면 게임 화면을 띄운다
     }
     renderRoster();
   }
@@ -89,5 +91,9 @@ $('shBlock').onclick = () => window.api.cmd({ t: 'shield', mode: 'block' });
 $('shReflect').onclick = () => window.api.cmd({ t: 'shield', mode: 'reflect' });
 $('buy').onclick = () => window.api.cmd({ t: 'buy', n: 3 });
 
-// 처음 뜰 때 펼친 크기로 맞춤
+// 처음 뜰 때 펼친 크기로 맞추고, 저장된 설정으로 화면을 먼저 결정한다
 window.api.cmd({ t: 'resize-widget', w: EXPANDED.w, h: EXPANDED.h });
+Promise.resolve(window.api.cmd({ t: 'get-config' })).then((cfg) => {
+  // 방/이름이 저장돼 있으면 게임 화면(곧 상태가 채워짐), 없으면 입장 화면
+  showSetup(!(cfg && cfg.room && cfg.name));
+}).catch(() => showSetup(true));
