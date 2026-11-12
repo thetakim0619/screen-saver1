@@ -3,8 +3,11 @@
 'use strict';
 const A = require('../../_auth');
 
-const BASE = 'https://screen-war.vercel.app';
-const REDIRECT_URI = `${BASE}/api/auth/kakao/callback`;
+function baseOf(req) {
+  const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost';
+  const proto = req.headers['x-forwarded-proto'] || 'https';
+  return `${proto}://${host}`;
+}
 
 function page(msg) {
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
@@ -18,6 +21,8 @@ background:#141414;color:#eee;font-family:system-ui,'Malgun Gothic',sans-serif;t
 
 module.exports = async (req, res) => {
   res.setHeader('content-type', 'text/html; charset=utf-8');
+  const BASE = baseOf(req);
+  const REDIRECT_URI = `${BASE}/api/auth/kakao/callback`;
   try {
     const url = new URL(req.url, BASE);
     const code = url.searchParams.get('code');

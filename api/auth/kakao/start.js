@@ -3,10 +3,16 @@
 'use strict';
 const A = require('../../_auth');
 
-const BASE = 'https://screen-war.vercel.app';
-const REDIRECT_URI = `${BASE}/api/auth/kakao/callback`;
+// 요청이 들어온 도메인을 그대로 쓴다 (특정 주소를 코드에 박지 않음)
+function baseOf(req) {
+  const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost';
+  const proto = req.headers['x-forwarded-proto'] || 'https';
+  return `${proto}://${host}`;
+}
 
 module.exports = async (req, res) => {
+  const BASE = baseOf(req);
+  const REDIRECT_URI = `${BASE}/api/auth/kakao/callback`;
   const url = new URL(req.url, BASE);
   const session = (url.searchParams.get('session') || '').trim();
   const key = process.env.KAKAO_REST_API_KEY;
