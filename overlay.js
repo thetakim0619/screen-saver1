@@ -143,8 +143,13 @@ function startRecover(m) {
 }
 
 // ---- 서버 메시지 ----
+function isDnd() { try { return localStorage.getItem('sw_dnd') === '1'; } catch { return false; } }
+
 window.api.onServer((m) => {
-  if (m.t === 'incoming') startMission(m);
+  if (m.t === 'incoming') {
+    if (isDnd()) { setActive(false); return; } // 자리비움: 서버 반영 전 날아온 공격도 무시
+    startMission(m);
+  }
   else if (m.t === 'hit') playEffect((cur && cur.effect) ? cur.effect : m.effect); // 공격자가 고른 연출 우선
   else if (m.t === 'recover') startRecover(m);
 });

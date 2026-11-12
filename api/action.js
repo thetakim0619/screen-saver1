@@ -39,6 +39,10 @@ module.exports = async (req, res) => {
     const r = G.raiseShield(room, pid, b.mode);
     if (!r.ok) { await saveRoom(code, room); return send(res, 400, { error: r.reason === 'cooldown' ? '방패 재사용 대기중' : '방패 사용 불가' }); }
     events = [{ t: 'toast', msg: `방패(${b.mode === 'reflect' ? '반사' : '막기'}) 올림` }];
+  } else if (b.t === 'dnd') {
+    const r = G.setDnd(room, pid, !!b.on);
+    if (!r.ok) { await saveRoom(code, room); return send(res, 400, { error: '자리비움 설정 실패' }); }
+    events = [{ t: 'toast', msg: r.dnd ? '자리비움 켜짐 · 공격 안 받음' : '자리비움 해제' }];
   } else if (b.t === 'buy') {
     // 현질은 로그인 필요 — 구매 공격권은 계정에 쌓인다
     if (!uid) { await saveRoom(code, room); return send(res, 401, { error: '로그인 후 구매할 수 있어요' }); }
@@ -60,5 +64,6 @@ function reasonText(r) {
   return {
     no_credits: '공격권이 없습니다', bad_target: '대상을 고르세요',
     no_victims: '공격할 상대가 없습니다', bad_kind: '잘못된 공격',
+    self_away: '자리비움 중엔 공격할 수 없어요', target_away: '상대가 자리비움이에요',
   }[r] || '공격 실패';
 }

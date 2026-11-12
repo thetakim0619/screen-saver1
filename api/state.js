@@ -5,7 +5,7 @@ const { loadRoom, saveRoom, drainInbox } = require('./_store');
 const { send } = require('./_http');
 
 function publicPlayer(p) {
-  return { id: p.id, name: p.name, hp: p.hp, alive: p.alive,
+  return { id: p.id, name: p.name, hp: p.hp, alive: p.alive, dnd: !!p.dnd,
     credits: p.credits, purchased: p.purchased, shield: p.shield ? p.shield.mode : null };
 }
 
@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
   await saveRoom(code, room); // inbox 비운 상태 저장
 
   return send(res, 200, {
-    you: { id: me.id, name: me.name, hp: me.hp, credits: me.credits, purchased: me.purchased, shieldReadyAt: me.shieldReadyAt },
+    you: { id: me.id, name: me.name, hp: me.hp, credits: me.credits, purchased: me.purchased, dnd: !!me.dnd, shieldReadyAt: me.shieldReadyAt },
     roster: Object.values(room.players).map(publicPlayer),
     events,
   });

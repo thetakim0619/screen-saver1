@@ -4,13 +4,13 @@
 <meta charset="utf-8" />
 <style>
   :root { --bg:#17181a; --card:#202225; --line:#2c2f33; --fg:#e6e6e6; --mut:#8a8f96;
-          --red:#d8352b; --red2:#a8271f; --blue:#3b6fe0; --gold:#d8a21a; --slate:#363f4d; }
+          --red:#d8352b; --red2:#a8271f; --blue:#3b6fe0; --gold:#d8a21a; --slate:#363f4d; --away:#2f9e6f; }
   * { box-sizing:border-box; font-family:'Pretendard','Malgun Gothic',system-ui,sans-serif; }
   html,body { margin:0; height:100%; background:transparent; color:var(--fg);
               -webkit-user-select:none; cursor:default; overflow:hidden; }
 
   /* ===== 접힘(제목줄만) ===== */
-  body.collapsed .wrap, body.collapsed #setup, body.collapsed #toast { display:none !important; }
+  body.collapsed .wrap, body.collapsed #setup, body.collapsed #rooms, body.collapsed #toast { display:none !important; }
 
   /* ===== 패널 ===== */
   #app { height:100%; background:var(--bg); border:1px solid var(--line); border-radius:11px;
@@ -20,11 +20,26 @@
   .bar .dot { width:7px; height:7px; border-radius:50%; background:#555; }
   .bar .dot.on { background:#3ac267; }
   .bar b { font-size:11px; letter-spacing:.5px; }
-  .bar .me { margin-left:auto; font-size:10px; color:var(--mut); }
-  .bar .min { -webkit-app-region:no-drag; width:18px; height:18px; line-height:16px; text-align:center;
-              border-radius:5px; background:#2c2f33; color:var(--mut); font-size:13px; cursor:pointer; margin-left:6px; }
-  .bar .min:hover { background:#3a3e44; color:#fff; }
+  .bar .me { margin-left:auto; font-size:10px; color:var(--mut); max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bar .ico { -webkit-app-region:no-drag; width:18px; height:18px; line-height:16px; text-align:center;
+              border-radius:5px; background:#2c2f33; color:var(--mut); font-size:13px; cursor:pointer; margin-left:5px; }
+  .bar .ico:hover { background:#3a3e44; color:#fff; }
+  .bar .quit:hover { background:var(--red); color:#fff; }
   .wrap { padding:9px; overflow:auto; flex:1; }
+
+  /* 현재 방 줄 */
+  .roombar { display:flex; align-items:center; gap:6px; background:var(--card); border:1px solid var(--line);
+             border-radius:7px; padding:5px 8px; margin-bottom:8px; font-size:10px; }
+  .roombar .lbl { color:var(--mut); } .roombar .code { font-weight:700; letter-spacing:.5px; }
+  .roombar .sw { margin-left:auto; -webkit-app-region:no-drag; background:var(--slate); color:#fff;
+                 border-radius:6px; padding:3px 7px; font-size:9px; cursor:pointer; }
+  .roombar .sw:hover { background:#45505f; }
+
+  /* 자리비움 상태 리본 */
+  #dndRibbon { display:none; background:rgba(47,158,111,.14); border:1px solid var(--away); color:#7fe0b6;
+               border-radius:7px; padding:6px 8px; font-size:10px; margin-bottom:8px; text-align:center; }
+  body.dnd #dndRibbon { display:block; }
+
   .stat { display:flex; gap:6px; margin-bottom:8px; }
   .stat .box { flex:1; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:6px 8px; }
   .stat .k { font-size:9px; color:var(--mut); }
@@ -35,19 +50,23 @@
   .pl { display:flex; align-items:center; gap:6px; background:var(--card); border:1px solid var(--line);
         border-radius:7px; padding:5px 7px; font-size:11px; cursor:pointer; }
   .pl.sel { border-color:var(--red); }
+  .pl.away { opacity:.55; cursor:default; }
   .pl .nm { flex:1; } .pl .me-tag{ font-size:8px; color:var(--mut); }
+  .pl .tag-away { font-size:8px; color:var(--away); margin-left:4px; }
   .pl .hpbar { width:38px; height:4px; background:#333; border-radius:3px; overflow:hidden; }
   .pl .hpbar i { display:block; height:100%; background:var(--red); }
   .btns { display:flex; gap:5px; margin-top:3px; }
   button { flex:1; border:none; border-radius:7px; padding:8px 6px; font-size:11px; font-weight:700;
            color:#fff; cursor:pointer; }
+  button:disabled { opacity:.35; cursor:default; }
   .atk-all { background:var(--red); } .atk-one { background:var(--red2); }
   .sh-block { background:var(--slate); } .sh-reflect { background:var(--blue); }
   .buy { background:var(--gold); color:#1a1a1a; }
+  /* 자리비움 토글 */
+  .dnd-btn { background:var(--slate); width:100%; margin-top:2px; }
+  .dnd-btn.on { background:var(--away); color:#07140d; }
   input { width:100%; background:#111214; border:1px solid var(--line); color:var(--fg);
           border-radius:7px; padding:7px; font-size:11px; margin-top:5px; }
-  select { width:100%; background:#111214; border:1px solid var(--line); color:var(--fg);
-           border-radius:7px; padding:6px; font-size:11px; margin-bottom:5px; }
   /* 연출 미리보기 선택기 */
   .fxpick { display:flex; gap:4px; margin-bottom:6px; }
   .fxitem { flex:1; border:1.5px solid var(--line); border-radius:6px; overflow:hidden; cursor:pointer;
@@ -73,12 +92,29 @@
   #toast { position:absolute; left:9px; right:9px; bottom:8px; background:#000; border:1px solid var(--line);
            border-radius:7px; padding:7px 9px; font-size:10px; opacity:0; transition:.2s; pointer-events:none; }
   #toast.show { opacity:1; }
-  #setup { display:none; padding:11px; }
-  #setup.show { display:block; }
-  #setup h3 { margin:2px 0 2px; font-size:13px; }
-  #setup p { font-size:10px; color:var(--mut); margin:0 0 8px; line-height:1.4; }
+
+  /* 입장 / 방 선택 공통 */
+  #setup, #rooms { display:none; padding:11px; }
+  #setup.show, #rooms.show { display:block; }
+  #setup h3, #rooms h3 { margin:2px 0 2px; font-size:13px; }
+  #setup p, #rooms p { font-size:10px; color:var(--mut); margin:0 0 8px; line-height:1.4; }
   #setup button { margin-top:9px; background:var(--red); }
   .hint { font-size:9px; color:var(--mut); margin-top:9px; line-height:1.5; }
+
+  /* 저장된 방 목록 */
+  .roomlist { display:flex; flex-direction:column; gap:4px; margin-bottom:8px; }
+  .roomrow { display:flex; align-items:center; gap:6px; background:var(--card); border:1px solid var(--line);
+             border-radius:7px; padding:7px 8px; font-size:11px; cursor:pointer; }
+  .roomrow:hover { border-color:var(--slate); }
+  .roomrow.cur { border-color:var(--away); }
+  .roomrow .rc { font-weight:700; letter-spacing:.5px; }
+  .roomrow .rn { color:var(--mut); font-size:9px; margin-left:auto; }
+  .roomrow .del { color:var(--mut); font-size:12px; padding:0 2px; }
+  .roomrow .del:hover { color:var(--red); }
+  .roomlist .empty { font-size:10px; color:var(--mut); text-align:center; padding:10px 0; }
+  #rooms .foot { display:flex; gap:5px; }
+  #rooms .foot button { margin:0; }
+  #roomBack { width:100%; margin-top:7px; background:#2c2f33; color:var(--mut); }
 </style>
 </head>
 <body>
@@ -87,7 +123,8 @@
       <span class="dot" id="dot"></span><b>SCREEN WAR</b>
       <span style="font-size:8px;color:var(--mut);margin-left:2px">v1.6</span>
       <span class="me" id="meName">—</span>
-      <span class="min" id="minBtn" title="접기/펼치기">–</span>
+      <span class="ico quit" id="quitBtn" title="종료">×</span>
+      <span class="ico" id="minBtn" title="접기/펼치기">–</span>
     </div>
 
     <div id="setup">
@@ -99,14 +136,32 @@
         <button id="su-make" style="flex:0 0 auto; width:64px; margin-top:5px; background:var(--slate);">방 만들기</button>
       </div>
       <button id="su-save">입장하기</button>
+      <div id="su-cancel" class="hint" style="cursor:pointer; text-decoration:underline;">← 방 목록으로</div>
       <div class="hint">최소화는 오른쪽 위 – 버튼. 보스키 Ctrl+Shift+` · 비상해제 Ctrl+Shift+Esc</div>
     </div>
 
+    <div id="rooms">
+      <h3>방 선택</h3>
+      <p>저장된 방을 눌러 전환하거나, 새 방을 만드세요.</p>
+      <div class="roomlist" id="roomList"></div>
+      <div class="foot">
+        <button id="roomNew" style="background:var(--red);">새 방 만들기</button>
+        <button id="roomJoin" style="background:var(--slate);">코드로 입장</button>
+      </div>
+      <button id="roomBack">취소</button>
+    </div>
+
     <div class="wrap" id="game" style="display:none">
+      <div class="roombar">
+        <span class="lbl">방</span><span class="code" id="curRoom">—</span>
+        <span class="sw" id="switchRoom">전환</span>
+      </div>
+      <div id="dndRibbon">자리비움 중 · 공격이 차단됩니다</div>
       <div class="stat">
         <div class="box"><div class="k">공격권</div><div class="v cred" id="cred">0</div></div>
         <div class="box"><div class="k">체력</div><div class="v hp" id="hp">100</div></div>
       </div>
+      <button class="dnd-btn" id="dndBtn">자리비움 (회의 중 켜기)</button>
       <div class="sec">상대 (지정 공격하려면 클릭)</div>
       <div class="roster" id="roster"></div>
       <div class="sec">공격 연출 (상대 화면에 뜰 모양)</div>

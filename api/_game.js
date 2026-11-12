@@ -40,6 +40,7 @@ function newPlayer(id, name) {
     shield: null,            // { mode:'block'|'reflect', readyAt:ms }
     shieldReadyAt: 0,        // 다음 방패 사용 가능 시각
     lastDailyReset: todayKey(),
+    dnd: false,              // 자리비움(방해금지): 켜면 공격을 받지도 하지도 못함
     alive: true,
   };
 }
@@ -116,6 +117,7 @@ function attack(room, attackerId, { kind, targetId, customText, effect }, now = 
   const attacker = room.players[attackerId];
   if (!attacker) return { ok: false, reason: 'no_attacker' };
   maybeDailyReset(attacker, now);
+  if (attacker.dnd) return { ok: false, reason: 'self_away' }; // 자리비움 중엔 공격 불가
 
   if (kind !== 'broadcast' && kind !== 'target') return { ok: false, reason: 'bad_kind' };
   if (totalCredits(attacker) < CONFIG.COST_ATTACK) return { ok: false, reason: 'no_credits' };
@@ -124,9 +126,11 @@ function attack(room, attackerId, { kind, targetId, customText, effect }, now = 
   if (kind === 'target') {
     const t = room.players[targetId];
     if (!t || t.id === attackerId) return { ok: false, reason: 'bad_target' };
+    if (t.dnd) return { ok: false, reason: 'target_away' }; // 상대가 자리비움 → 공격권 소모 없이 거절
     victims = [t];
   } else {
-    victims = Object.values(room.players).filter((p) => p.id !== attackerId);
+    // 전체 공격은 자리비움인 사람은 건너뛴다
+    victims = Object.values(room.players).filter((p) => p.id !== attackerId && !p.dnd);
   }
   if (victims.length === 0) return { ok: false, reason: 'no_victims' };
 
@@ -225,6 +229,14 @@ function raiseShield(room, playerId, mode, now = Date.now()) {
   return { ok: true, mode };
 }
 
+// 자리비움(방해금지) 토글. 켜면 공격을 받지도 하지도 못한다(회의 중 보호용).
+function setDnd(room, playerId, on) {
+  const p = room.players[playerId];
+  if (!p) return { ok: false, reason: 'no_player' };
+  p.dnd = !!on;
+  return { ok: true, dnd: p.dnd };
+}
+
 // 공격권 구매(현질) — 프로토타입에서는 실제 결제 없이 숫자만 올린다.
 // 단, 하루 피해 상한은 구매와 무관하게 유지된다(돈으로 한 명을 무한히 때릴 수 없음).
 function buyCredits(room, playerId, n = 1) {
@@ -238,5 +250,5 @@ module.exports = {
   CONFIG,
   newPlayer, todayKey, maybeDailyReset,
   totalCredits, spendCredit, makeMission,
-  attack, resolveMission, raiseShield, buyCredits,
+  attack, resolveMission, raiseShield, setDnd, buyCredits,
 };
