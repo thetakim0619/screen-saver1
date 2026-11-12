@@ -40,7 +40,11 @@ module.exports = async (req, res) => {
       method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body,
     });
     const tok = await tokRes.json();
-    if (!tok.access_token) { res.statusCode = 400; return res.end(page({ t: '로그인 실패', s: '토큰 교환 실패. 잠시 후 다시 시도해 주세요.' })); }
+    if (!tok.access_token) {
+      const detail = `[${tokRes.status}] ${tok.error || ''} ${tok.error_description || ''} (code=${tok.error_code || ''})`;
+      res.statusCode = 400;
+      return res.end(page({ t: '로그인 실패', s: '토큰 교환 실패: ' + detail }));
+    }
 
     const meRes = await fetch('https://kapi.kakao.com/v2/user/me', {
       headers: { Authorization: `Bearer ${tok.access_token}` },
