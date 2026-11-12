@@ -15,6 +15,7 @@ function clearAll() {
   clearInterval(timer); clearInterval(effectTimer);
   $('mission').classList.remove('show', 'target');
   $('recover').classList.remove('show');
+  stopFx();
   $('fx').classList.remove('show'); $('fx').innerHTML = '';
   $('escHint').style.display = 'none';
   cur = null;
@@ -90,16 +91,42 @@ const FX_VID = { crack: 'fx/crack.webm', glitch: 'fx/glitch.webm', melt: 'fx/mel
 (function preloadFx() { // 공격이 오면 바로 뜨도록 미리 받아 캐시
   for (const u of Object.values(FX_VID)) { const v = document.createElement('video'); v.preload = 'auto'; v.muted = true; v.src = u; }
 })();
+
+let curFx = null;
+function stopFx() { if (curFx && curFx._stop) curFx._stop(); curFx = null; }
+
+// 검은 배경 영상을 매 프레임 실시간 키잉(밝기→알파, 검은색=투명)해 캔버스에 그린다.
+// VP8/VP9 알파가 이 환경에서 안 되므로, 투명 처리는 브라우저가 직접 한다.
 function videoLayer(url, loop) {
-  const v = document.createElement('video');
-  v.className = 'fximg'; v.src = url; v.muted = true; v.autoplay = true; v.loop = !!loop;
-  v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('autoplay', '');
-  v.play && v.play().catch(() => {});
-  return v;
+  const wrap = document.createElement('div'); wrap.className = 'fximg';
+  const cv = document.createElement('canvas'); cv.className = 'fxcanvas'; wrap.appendChild(cv);
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  const vid = document.createElement('video');
+  vid.src = url; vid.muted = true; vid.loop = !!loop; vid.playsInline = true;
+  vid.setAttribute('muted', ''); vid.setAttribute('playsinline', '');
+  let raf = 0, sized = false, stopped = false;
+  function frame() {
+    if (stopped) return;
+    if (vid.videoWidth) {
+      if (!sized) { cv.width = vid.videoWidth; cv.height = vid.videoHeight; sized = true; }
+      try {
+        ctx.drawImage(vid, 0, 0, cv.width, cv.height);
+        const im = ctx.getImageData(0, 0, cv.width, cv.height), d = im.data;
+        for (let i = 0; i < d.length; i += 4) { let l = (d[i] * 77 + d[i + 1] * 150 + d[i + 2] * 29) >> 8; l *= 1.4; d[i + 3] = l > 255 ? 255 : l; }
+        ctx.putImageData(im, 0, 0);
+      } catch (e) {}
+    }
+    raf = requestAnimationFrame(frame);
+  }
+  vid.addEventListener('ended', () => { if (!loop) { stopped = true; cancelAnimationFrame(raf); } }); // 마지막 프레임 유지
+  const go = () => { raf = requestAnimationFrame(frame); };
+  vid.play().then(go).catch(go);
+  wrap._stop = () => { stopped = true; cancelAnimationFrame(raf); try { vid.pause(); vid.src = ''; } catch (e) {} };
+  return wrap;
 }
 
 function playEffect(kind) {
-  const fx = $('fx'); fx.innerHTML = ''; fx.classList.remove('shake'); fx.classList.add('show');
+  const fx = $('fx'); stopFx(); fx.innerHTML = ''; fx.classList.remove('shake'); fx.classList.add('show');
   setActive(true);
   $('escHint').style.display = 'block';
   if (kind === 'bsod') {
@@ -108,9 +135,9 @@ function playEffect(kind) {
       <div>잠시만 기다리거나 복구 문장을 입력하세요.</div>
       <div class="fake">* 게임 연출입니다 (실제 오류 아님) · ESC로 닫기</div></div>`;
   } else if (kind === 'crack' || kind === 'glitch' || kind === 'melt') {
-    fx.appendChild(videoLayer(FX_VID[kind], kind === 'glitch')); // 글리치만 반복
+    curFx = videoLayer(FX_VID[kind], kind === 'glitch'); fx.appendChild(curFx); // 글리치만 반복
   } else {
-    fx.appendChild(videoLayer(FX_VID.glitch, true));
+    curFx = videoLayer(FX_VID.glitch, true); fx.appendChild(curFx);
   }
   // 안전장치: 복구 못 해도 일정 시간 뒤 자동 해제 (최대 8초)
   clearTimeout(effectTimer);
