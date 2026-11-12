@@ -89,6 +89,16 @@
                    color:#fff; font-size:10px; }
   .t-crack { background:#15151a; }
   .custom { display:none; } .custom.show { display:block; }
+  /* 커스텀 이미지 선택(내 화면) */
+  .custpick { display:flex; gap:4px; margin-bottom:6px; flex-wrap:wrap; }
+  .custpick .fxitem { flex:0 0 auto; width:44px; position:relative; }
+  .custpick .fxthumb { height:30px; }
+  .custpick .fxthumb img { width:100%; height:100%; object-fit:cover; display:block; }
+  .custpick .addthumb { display:flex; align-items:center; justify-content:center; font-size:16px; color:var(--mut); background:#15161a; height:30px; }
+  .custpick .cdel { position:absolute; top:-5px; right:-5px; width:14px; height:14px; line-height:12px; text-align:center;
+                    background:#000; border:1px solid var(--line); border-radius:50%; font-size:10px; color:var(--mut); }
+  .custpick .cdel:hover { color:var(--red); border-color:var(--red); }
+  .custhint { font-size:9px; color:var(--mut); line-height:1.4; padding:2px 0; }
   #toast { position:absolute; left:9px; right:9px; bottom:8px; background:#000; border:1px solid var(--line);
            border-radius:7px; padding:7px 9px; font-size:10px; opacity:0; transition:.2s; pointer-events:none; }
   #toast.show { opacity:1; }
@@ -172,6 +182,8 @@
         <div class="fxitem" data-fx="melt" title="녹아내림"><span class="fxthumb t-melt"></span><span class="lbl">멜트</span></div>
         <div class="fxitem" data-fx="bsod" title="블루스크린"><span class="fxthumb t-bsod"></span><span class="lbl">블루</span></div>
       </div>
+      <div class="custpick" id="custpick"></div>
+      <input type="file" id="custFile" accept="image/*" style="display:none" />
       <input class="custom" id="customText" placeholder="지정 공격 문장 (비우면 랜덤)" maxlength="40" />
       <div class="btns">
         <button class="atk-all" id="atkAll">전체 공격</button>
@@ -182,8 +194,10 @@
         <button class="sh-block" id="shBlock">막기 방패</button>
         <button class="sh-reflect" id="shReflect">반사 방패</button>
       </div>
-      <div class="sec">공격권 충전 (장당 500원)</div>
-      <div class="btns"><button class="buy" id="buy">충전 +3 · 카카오페이</button></div>
+      <div id="paySec" style="display:none">
+        <div class="sec">공격권 충전 (장당 500원)</div>
+        <div class="btns"><button class="buy" id="buy">충전 +3 · 카카오페이</button></div>
+      </div>
 
       <div class="sec">계정 (구매 공격권 보관)</div>
       <div style="display:flex; align-items:center; gap:6px;">

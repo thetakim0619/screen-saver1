@@ -125,11 +125,16 @@ function videoLayer(url, loop) {
   return wrap;
 }
 
-function playEffect(kind) {
+function playEffect(kind, customUrl) {
   const fx = $('fx'); stopFx(); fx.innerHTML = ''; fx.classList.remove('shake'); fx.classList.add('show');
   setActive(true);
   $('escHint').style.display = 'block';
-  if (kind === 'bsod') {
+  if (kind === 'custom' && customUrl) {
+    // 공격자가 올린 이미지를 화면 전체에 띄운다(화면 점령)
+    const d = document.createElement('div'); d.className = 'fximg custimg';
+    d.style.backgroundImage = `url("${customUrl}")`;
+    fx.appendChild(d);
+  } else if (kind === 'bsod') {
     fx.innerHTML = `<div class="bsod"><div class="face">:(</div>
       <div>문제가 발생하여 화면을 복구하는 중입니다.</div>
       <div>잠시만 기다리거나 복구 문장을 입력하세요.</div>
@@ -187,7 +192,7 @@ window.api.onServer((m) => {
     if (isDnd()) { setActive(false); return; } // 자리비움: 서버 반영 전 날아온 공격도 무시
     startMission(m);
   }
-  else if (m.t === 'hit') playEffect((cur && cur.effect) ? cur.effect : m.effect); // 공격자가 고른 연출 우선
+  else if (m.t === 'hit') playEffect((cur && cur.effect) ? cur.effect : m.effect, cur && cur.customUrl); // 공격자가 고른 연출/이미지 우선
   else if (m.t === 'recover') startRecover(m);
 });
 window.api.onForceClear(() => clearAll());

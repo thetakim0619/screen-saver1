@@ -24,10 +24,17 @@ module.exports = async (req, res) => {
 
   let events = [];
   if (b.t === 'attack') {
+    // 커스텀 이미지 공격은 로그인 필요(내 계정에 올린 이미지를 쓰므로)
+    let customUrl = null;
+    if (b.effect === 'custom') {
+      if (!uid) { await saveRoom(code, room); return send(res, 401, { error: '커스텀 화면은 로그인 후 쓸 수 있어요' }); }
+      if (!b.customId) { await saveRoom(code, room); return send(res, 400, { error: '커스텀 이미지를 고르세요' }); }
+      customUrl = `/api/custom/img?o=${encodeURIComponent(uid)}&id=${encodeURIComponent(b.customId)}`;
+    }
     // 계정의 구매 공격권을 플레이어에 잠시 반영 → 공격 처리 → 쓴 만큼 계정에 되돌려 저장
     const acct = player.userId ? await A.getUser(player.userId) : null;
     player.purchased = acct ? (acct.purchased || 0) : 0;
-    const r = G.attack(room, pid, { kind: b.kind, targetId: b.targetId, customText: b.customText, effect: b.effect });
+    const r = G.attack(room, pid, { kind: b.kind, targetId: b.targetId, customText: b.customText, effect: b.effect, customUrl });
     if (!r.ok) { player.purchased = 0; await saveRoom(code, room); return send(res, 400, { error: reasonText(r.reason) }); }
     if (acct) { acct.purchased = player.purchased; await A.setUser(acct); } // 구매분 변화 반영
     player.purchased = 0; // 방 플레이어는 구매분을 들고 있지 않음(계정이 보관)

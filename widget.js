@@ -3,6 +3,8 @@ const $ = (id) => document.getElementById(id);
 let me = null, roster = [], selected = null, config = null, selectedFx = '';
 let myFree = 0, acctPurchased = 0, myCred = 0;
 let myDnd = false, curRoom = '', curName = '';
+let selectedCustomId = null, customs = [], myUid = '';
+const PAYMENTS_ON = false; // 사업자 전까지 결제 숨김. 나중에 true로.
 function updateCred() { myCred = myFree + acctPurchased; $('cred').textContent = myCred; }
 const FX_NAMES = { '': '랜덤', crack: '유리 깨짐', glitch: '글리치', melt: '녹아내림', bsod: '블루스크린' };
 
@@ -174,20 +176,101 @@ $('dndBtn').onclick = () => {
   toast(next ? '자리비움 켜짐 · 공격 안 받음' : '자리비움 해제');
 };
 
-// 연출 썸네일 선택
+// 연출 썸네일 선택 (기본 연출 고르면 커스텀 선택 해제)
 document.querySelectorAll('#fxpick .fxitem').forEach((el) => {
   el.onclick = () => {
     selectedFx = el.dataset.fx || '';
+    selectedCustomId = null;
     document.querySelectorAll('#fxpick .fxitem').forEach((x) => x.classList.toggle('sel', x === el));
+    renderCustpick();
   };
 });
-function fxLabel() { return FX_NAMES[selectedFx] || '랜덤'; }
+function fxLabel() { return selectedFx === 'custom' ? '내 화면' : (FX_NAMES[selectedFx] || '랜덤'); }
+
+// ===== 커스텀 이미지(내 화면) =====
+async function refreshCustoms() {
+  if (!authToken) { customs = []; myUid = ''; renderCustpick(); return; }
+  try {
+    const r = await fetch(`${AUTH_BASE}/api/custom/list?token=${encodeURIComponent(authToken)}&t=${Date.now()}`);
+    const j = await r.json(); customs = j.items || []; myUid = j.uid || '';
+  } catch { customs = []; }
+  renderCustpick();
+}
+function renderCustpick() {
+  const box = $('custpick'); box.innerHTML = '';
+  if (!authToken) { box.innerHTML = '<div class="custhint">카카오 로그인하면 내 이미지를 등록해 공격 화면으로 띄울 수 있어요</div>'; return; }
+  for (const c of customs) {
+    const el = document.createElement('div');
+    el.className = 'fxitem cust' + (selectedCustomId === c.id ? ' sel' : '');
+    el.innerHTML = `<span class="fxthumb"><img src="${AUTH_BASE}/api/custom/img?o=${encodeURIComponent(myUid)}&id=${encodeURIComponent(c.id)}" /></span><span class="lbl">${escapeHtml(c.name)}</span><span class="cdel" title="삭제">×</span>`;
+    el.onclick = (e) => { if (e.target.classList.contains('cdel')) return; selectCustom(c.id); };
+    el.querySelector('.cdel').onclick = (e) => { e.stopPropagation(); delCustom(c.id); };
+    box.appendChild(el);
+  }
+  if (customs.length < 2) {
+    const add = document.createElement('div');
+    add.className = 'fxitem addcust';
+    add.innerHTML = '<span class="fxthumb addthumb">+</span><span class="lbl">추가</span>';
+    add.onclick = () => $('custFile').click();
+    box.appendChild(add);
+  }
+}
+function selectCustom(id) {
+  selectedFx = 'custom'; selectedCustomId = id;
+  document.querySelectorAll('#fxpick .fxitem').forEach((x) => x.classList.remove('sel'));
+  renderCustpick();
+  toast('내 화면 선택됨 · 지정 공격으로 발사');
+}
+async function delCustom(id) {
+  try {
+    const r = await fetch(`${AUTH_BASE}/api/custom/del`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: authToken, id }) });
+    const j = await r.json(); customs = j.items || [];
+    if (selectedCustomId === id) { selectedCustomId = null; selectedFx = ''; }
+    renderCustpick();
+  } catch {}
+}
+// 파일 → 캔버스 리사이즈 → JPEG dataURL (용량 절약)
+function resizeImage(file, maxW, q) {
+  return new Promise((resolve, reject) => {
+    const img = new Image(); const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const sc = Math.min(1, maxW / img.width);
+      const w = Math.round(img.width * sc), h = Math.round(img.height * sc);
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(cv.toDataURL('image/jpeg', q));
+    };
+    img.onerror = reject; img.src = url;
+  });
+}
+$('custFile').onchange = async (e) => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  if (!authToken) { $('custFile').value = ''; return toast('카카오 로그인 후 등록할 수 있어요'); }
+  toast('이미지 올리는 중...');
+  let dataUrl;
+  try { dataUrl = await resizeImage(f, 1000, 0.82); } catch { $('custFile').value = ''; return toast('이미지를 읽지 못했어요'); }
+  try {
+    const r = await fetch(`${AUTH_BASE}/api/custom/upload`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: authToken, dataUrl, name: f.name.replace(/\.[^.]+$/, '').slice(0, 20) }) });
+    const j = await r.json();
+    $('custFile').value = '';
+    if (!j.ok) return toast('⚠ ' + (j.error || '업로드 실패'));
+    customs = j.items || []; renderCustpick(); toast('내 화면 등록됨');
+  } catch { $('custFile').value = ''; toast('업로드 실패'); }
+};
 
 // ===== 공격/방어/현질 =====
+function customOk() {
+  if (selectedFx !== 'custom') return true;
+  if (!authToken) { toast('내 화면은 카카오 로그인 후 쓸 수 있어요'); return false; }
+  if (!selectedCustomId) { toast('내 화면을 먼저 고르세요'); return false; }
+  return true;
+}
 $('atkAll').onclick = () => {
   if (myDnd) return toast('자리비움 중엔 공격할 수 없어요');
   if (myCred < 1) return toast('공격권이 없습니다');
-  window.api.cmd({ t: 'attack', kind: 'broadcast', effect: selectedFx, token: authToken });
+  if (!customOk()) return;
+  window.api.cmd({ t: 'attack', kind: 'broadcast', effect: selectedFx, customId: selectedFx === 'custom' ? selectedCustomId : undefined, token: authToken });
   $('cred').textContent = Math.max(0, myCred - 1); // 즉시 반영(곧 서버값으로 갱신)
   setTimeout(refreshAcct, 600);                    // 구매분 썼을 수 있으니 갱신
   toast(`전체 공격 보냄 → (${fxLabel()})`);
@@ -196,8 +279,9 @@ $('atkOne').onclick = () => {
   if (myDnd) return toast('자리비움 중엔 공격할 수 없어요');
   if (!selected) return toast('상대를 먼저 클릭하세요');
   if (myCred < 1) return toast('공격권이 없습니다');
+  if (!customOk()) return;
   const name = (roster.find((p) => p.id === selected) || {}).name || '상대';
-  window.api.cmd({ t: 'attack', kind: 'target', targetId: selected, customText: $('customText').value.trim(), effect: selectedFx, token: authToken });
+  window.api.cmd({ t: 'attack', kind: 'target', targetId: selected, customText: $('customText').value.trim(), effect: selectedFx, customId: selectedFx === 'custom' ? selectedCustomId : undefined, token: authToken });
   $('cred').textContent = Math.max(0, myCred - 1);
   setTimeout(refreshAcct, 600);
   toast(`${name}에게 공격 보냄 → (${fxLabel()})`);
@@ -236,13 +320,15 @@ let authToken = '';
 try { authToken = localStorage.getItem('sw_token') || ''; } catch {}
 
 async function refreshAcct() {
-  if (!authToken) { $('acctName').textContent = '로그인 안 됨'; $('loginBtn').textContent = '카카오 로그인'; return; }
+  if (!authToken) { $('acctName').textContent = '로그인 안 됨'; $('loginBtn').textContent = '카카오 로그인'; refreshCustoms(); return; }
   try {
     const r = await fetch(`${AUTH_BASE}/api/auth/me?token=${encodeURIComponent(authToken)}&t=${Date.now()}`);
     const j = await r.json();
     if (j.loggedIn) { acctPurchased = j.purchased || 0; $('acctName').textContent = `${j.name}님 · 구매 ${acctPurchased}`; $('loginBtn').textContent = '로그아웃'; }
     else { authToken = ''; try { localStorage.removeItem('sw_token'); } catch {} acctPurchased = 0; $('acctName').textContent = '로그인 안 됨'; $('loginBtn').textContent = '카카오 로그인'; }
     updateCred();
+    refreshCustoms(); // 내 커스텀 이미지 목록 갱신
+    if (PAYMENTS_ON && $('paySec')) $('paySec').style.display = 'block';
   } catch {}
 }
 
