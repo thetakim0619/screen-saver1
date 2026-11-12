@@ -110,6 +110,49 @@ $('shBlock').onclick = () => window.api.cmd({ t: 'shield', mode: 'block' });
 $('shReflect').onclick = () => window.api.cmd({ t: 'shield', mode: 'reflect' });
 $('buy').onclick = () => window.api.cmd({ t: 'buy', n: 3 });
 
+// ===== 카카오 로그인 (선택) =====
+// 위젯은 서버에서 로드되므로 location.origin이 곧 우리 서버다. 같은 출처라 바로 호출 가능.
+const AUTH_BASE = location.origin;
+let authToken = '';
+try { authToken = localStorage.getItem('sw_token') || ''; } catch {}
+
+async function refreshAcct() {
+  if (!authToken) { $('acctName').textContent = '로그인 안 됨'; $('loginBtn').textContent = '카카오 로그인'; return; }
+  try {
+    const r = await fetch(`${AUTH_BASE}/api/auth/me?token=${encodeURIComponent(authToken)}&t=${Date.now()}`);
+    const j = await r.json();
+    if (j.loggedIn) { $('acctName').textContent = `${j.name}님 · 구매 ${j.purchased || 0}`; $('loginBtn').textContent = '로그아웃'; }
+    else { authToken = ''; try { localStorage.removeItem('sw_token'); } catch {} $('acctName').textContent = '로그인 안 됨'; $('loginBtn').textContent = '카카오 로그인'; }
+  } catch {}
+}
+
+function startKakaoLogin() {
+  const sid = ((window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Math.random()) + Date.now()).replace(/-/g, '').slice(0, 24);
+  const pop = window.open(`${AUTH_BASE}/api/auth/kakao/start?session=${sid}`, 'kakao_login', 'width=480,height=720');
+  toast('카카오 로그인 창에서 진행하세요');
+  let tries = 0;
+  const iv = setInterval(async () => {
+    tries++;
+    try {
+      const r = await fetch(`${AUTH_BASE}/api/auth/poll?session=${sid}&t=${Date.now()}`);
+      const j = await r.json();
+      if (j.ready) {
+        clearInterval(iv); authToken = j.token;
+        try { localStorage.setItem('sw_token', authToken); } catch {}
+        try { pop && pop.close(); } catch {}
+        refreshAcct(); toast(`${j.name}님 로그인 완료`);
+      } else if (j.expired) { clearInterval(iv); toast('로그인 시간이 초과됐어요. 다시 시도하세요'); }
+    } catch {}
+    if (tries > 80) clearInterval(iv); // 2분
+  }, 1500);
+}
+
+$('loginBtn').onclick = () => {
+  if (authToken) { authToken = ''; try { localStorage.removeItem('sw_token'); } catch {} refreshAcct(); toast('로그아웃됨'); return; }
+  startKakaoLogin();
+};
+refreshAcct();
+
 // 처음 뜰 때 펼친 크기로 맞추고, 저장된 설정으로 화면을 먼저 결정한다
 window.api.cmd({ t: 'resize-widget', w: EXPANDED.w, h: EXPANDED.h });
 Promise.resolve(window.api.cmd({ t: 'get-config' })).then((cfg) => {
