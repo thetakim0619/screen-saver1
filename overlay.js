@@ -83,9 +83,25 @@ function finishMission(success) {
   // 실패면 setActive 유지, 곧 hit/recover가 온다
 }
 
-// ---- 화면 깨짐 연출 ----
+// ---- 화면 깨짐 연출 (실사 이미지 + 애니메이션) ----
+// 이미지는 서버의 /fx 에서 불러오고, 검은 배경은 알파로 투명 처리돼 있어 실제 화면 위에 자연스럽게 얹힌다.
+const FX_IMG = {
+  crack: ['fx/crack1.webp', 'fx/crack2.webp', 'fx/crack3.webp'],
+  glitch: ['fx/glitch.webp'],
+  melt: ['fx/melt.webp'],
+};
+(function preloadFx() { // 공격이 오면 즉시 뜨도록 미리 받아 캐시
+  for (const arr of Object.values(FX_IMG)) arr.forEach((u) => { const i = new Image(); i.src = u; });
+})();
+function imgLayer(url, cls) {
+  const d = document.createElement('div');
+  d.className = 'fximg ' + cls;
+  d.style.backgroundImage = `url("${url}")`;
+  return d;
+}
+
 function playEffect(kind) {
-  const fx = $('fx'); fx.innerHTML = ''; fx.classList.add('show');
+  const fx = $('fx'); fx.innerHTML = ''; fx.classList.remove('shake'); fx.classList.add('show');
   setActive(true);
   $('escHint').style.display = 'block';
   if (kind === 'bsod') {
@@ -93,14 +109,21 @@ function playEffect(kind) {
       <div>문제가 발생하여 화면을 복구하는 중입니다.</div>
       <div>잠시만 기다리거나 복구 문장을 입력하세요.</div>
       <div class="fake">* 게임 연출입니다 (실제 오류 아님) · ESC로 닫기</div></div>`;
-  } else if (kind === 'crack') {
-    fx.innerHTML = `<div class="crack">${crackSVG()}</div>`;
-  } else if (kind === 'melt') {
-    let bars = '';
-    for (let i = 0; i < 34; i++) bars += `<i style="left:${i * 3}%;animation-delay:${Math.random()}s"></i>`;
-    fx.innerHTML = `<div class="melt">${bars}</div>`;
+  } else if (kind === 'crack' || kind === 'glitch' || kind === 'melt') {
+    const pool = FX_IMG[kind];
+    const url = pool[Math.floor(Math.random() * pool.length)];
+    if (kind === 'crack') {
+      const flash = document.createElement('div'); flash.className = 'fx-flash flashHit';
+      fx.appendChild(flash);
+      fx.appendChild(imgLayer(url, 'crackIn'));
+      void fx.offsetWidth; fx.classList.add('shake'); // 리플로우 후 흔들림 시작
+    } else if (kind === 'glitch') {
+      fx.appendChild(imgLayer(url, 'glitchAnim'));
+    } else {
+      fx.appendChild(imgLayer(url, 'meltAnim'));
+    }
   } else {
-    fx.innerHTML = `<div class="glitch"></div>`;
+    fx.appendChild(imgLayer(FX_IMG.glitch[0], 'glitchAnim'));
   }
   // 안전장치: 복구 못 해도 일정 시간 뒤 자동 해제 (최대 8초)
   clearTimeout(effectTimer);

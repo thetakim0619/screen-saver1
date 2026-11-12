@@ -59,6 +59,28 @@
   .bsod .face { font-size:64px; }
   .bsod .fake { position:absolute; right:10px; bottom:8px; font-size:11px; color:#bfe0ff; }
 
+  /* ===== 이미지 기반 연출 (검은 부분은 알파로 투명, 균열/액체/글리치만 화면 위에 뜸) ===== */
+  .fximg { position:absolute; inset:0; background-size:cover; background-position:center;
+           background-repeat:no-repeat; will-change:transform,opacity,clip-path; pointer-events:none; }
+  .fx-flash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; }
+  #fx.shake { animation: fxshake .5s cubic-bezier(.36,.07,.19,.97) both; }
+  @keyframes fxshake { 10%,90%{transform:translate(-2px,1px)} 20%,80%{transform:translate(5px,-2px)}
+    30%,50%,70%{transform:translate(-9px,2px)} 40%,60%{transform:translate(9px,-1px)} }
+  /* 유리: 번쩍 + 쾅 스냅인 */
+  @keyframes crackIn { 0%{opacity:0;transform:scale(1.16)} 10%{opacity:1} 100%{opacity:1;transform:scale(1)} }
+  .crackIn { animation: crackIn .45s ease-out both; }
+  @keyframes flashHit { 0%{opacity:0} 5%{opacity:.9} 28%{opacity:0} 100%{opacity:0} }
+  .flashHit { animation: flashHit .5s ease-out both; }
+  /* 글리치: 떨림 + 깜빡 */
+  @keyframes gJit { 0%{transform:translate(0,0)} 20%{transform:translate(-7px,1px)} 40%{transform:translate(6px,-2px)}
+    60%{transform:translate(-4px,2px)} 80%{transform:translate(5px,0)} 100%{transform:translate(0,0)} }
+  @keyframes gFlick { 0%,100%{opacity:1} 44%{opacity:.55} 50%{opacity:.12} 56%{opacity:.85} }
+  .glitchAnim { animation: gJit .2s steps(2) infinite, gFlick .5s steps(1) infinite; }
+  /* 멜트: 위에서 아래로 흘러내림 + 좌우 흔들 */
+  @keyframes meltDown { 0%{clip-path:inset(0 0 100% 0)} 100%{clip-path:inset(0 0 0 0)} }
+  @keyframes meltSway { 0%,100%{transform:translateX(0)} 50%{transform:translateX(5px)} }
+  .meltAnim { animation: meltDown 1.5s ease-in both, meltSway 3.2s ease-in-out .2s infinite; }
+
   /* 복구 미션 (깨진 화면 위) */
   #recover { position:fixed; left:50%; top:52%; transform:translate(-50%,-50%); width:460px;
      background:#101010; color:#fff; border:1px solid #333; border-radius:10px; padding:16px; display:none; }
