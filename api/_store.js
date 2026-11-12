@@ -104,4 +104,21 @@ function drainInbox(room, pid) {
   return box;
 }
 
-module.exports = { loadRoom, saveRoom, routeEvents, drainInbox, pushInbox };
+// 범용 키-값 (로그인 세션·토큰·계정용). 값은 JSON으로 저장.
+async function kvGet(key) {
+  if (!URL) { const v = mem.get(key); return v === undefined ? null : v; }
+  const s = await redis(['GET', key]);
+  return s ? JSON.parse(s) : null;
+}
+async function kvSet(key, val, ttlSec) {
+  if (!URL) { mem.set(key, val); return; }
+  const args = ['SET', key, JSON.stringify(val)];
+  if (ttlSec) args.push('EX', String(ttlSec));
+  await redis(args);
+}
+async function kvDel(key) {
+  if (!URL) { mem.delete(key); return; }
+  await redis(['DEL', key]);
+}
+
+module.exports = { loadRoom, saveRoom, routeEvents, drainInbox, pushInbox, kvGet, kvSet, kvDel };
