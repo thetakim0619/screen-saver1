@@ -204,11 +204,31 @@ $('atkOne').onclick = () => {
 };
 $('shBlock').onclick = () => window.api.cmd({ t: 'shield', mode: 'block' });
 $('shReflect').onclick = () => window.api.cmd({ t: 'shield', mode: 'reflect' });
-$('buy').onclick = async () => {
-  if (!authToken) return toast('현질은 카카오 로그인 후 가능해요');
-  await window.api.cmd({ t: 'buy', n: 3, token: authToken });
-  setTimeout(refreshAcct, 500);
-};
+// 카카오페이 결제(테스트) — 결제준비 → 결제창 팝업 → 상태 폴링 → 계정 적립
+async function startCharge(n) {
+  if (!authToken) return toast('카카오 로그인 후 결제할 수 있어요');
+  toast('결제창을 여는 중...');
+  let j;
+  try {
+    const r = await fetch(`${AUTH_BASE}/api/pay/ready`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: authToken, n }) });
+    j = await r.json();
+  } catch (e) { return toast('결제 연결 실패'); }
+  if (!j.ok || !j.redirectUrl) return toast('⚠ ' + (j.error || '결제 준비 실패'));
+  const pop = window.open(j.redirectUrl, 'kakaopay', 'width=480,height=720');
+  toast(`카카오페이 결제창에서 진행하세요 (${j.amount}원)`);
+  let tries = 0;
+  const iv = setInterval(async () => {
+    tries++;
+    try {
+      const s = await (await fetch(`${AUTH_BASE}/api/pay/status?order=${encodeURIComponent(j.orderId)}&t=${Date.now()}`)).json();
+      if (s.status === 'done') { clearInterval(iv); try { pop && pop.close(); } catch (e) {} refreshAcct(); toast('결제 완료 · 공격권 적립됨'); }
+      else if (s.status === 'fail') { clearInterval(iv); toast('결제 실패'); }
+      else if (s.status === 'expired') { clearInterval(iv); }
+    } catch (e) {}
+    if (tries > 120) clearInterval(iv); // 3분
+  }, 1500);
+}
+$('buy').onclick = () => startCharge(3);
 
 // ===== 카카오 로그인 (선택) =====
 const AUTH_BASE = location.origin;
