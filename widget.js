@@ -1,6 +1,8 @@
 'use strict';
 const $ = (id) => document.getElementById(id);
-let me = null, roster = [], selected = null, config = null, myCred = 0, selectedFx = '';
+let me = null, roster = [], selected = null, config = null, selectedFx = '';
+let myFree = 0, acctPurchased = 0, myCred = 0;
+function updateCred() { myCred = myFree + acctPurchased; $('cred').textContent = myCred; }
 const FX_NAMES = { '': '랜덤', crack: '유리 깨짐', glitch: '글리치', melt: '녹아내림', bsod: '블루스크린' };
 
 const EXPANDED = { w: 212, h: 340 };
@@ -61,8 +63,8 @@ window.api.onServer((m) => {
     roster = m.roster || [];
     if (m.you) {
       if (!me) { me = m.you.id; $('meName').textContent = m.you.name; } // 입장 신호를 놓쳤어도 복구
-      myCred = m.you.credits + m.you.purchased;
-      $('cred').textContent = myCred;
+      myFree = m.you.credits;      // 매일 주는 무료 공격권
+      updateCred();                // 무료 + 계정 구매분 합산 표시
       $('hp').textContent = m.you.hp;
       showSetup(false); // 내 정보가 있으면 게임 화면을 띄운다
     }
@@ -94,21 +96,27 @@ document.querySelectorAll('#fxpick .fxitem').forEach((el) => {
 function fxLabel() { return FX_NAMES[selectedFx] || '랜덤'; }
 $('atkAll').onclick = () => {
   if (myCred < 1) return toast('공격권이 없습니다');
-  window.api.cmd({ t: 'attack', kind: 'broadcast', effect: selectedFx });
-  myCred -= 1; $('cred').textContent = myCred; // 즉시 반영(곧 서버값으로 갱신)
+  window.api.cmd({ t: 'attack', kind: 'broadcast', effect: selectedFx, token: authToken });
+  $('cred').textContent = Math.max(0, myCred - 1); // 즉시 반영(곧 서버값으로 갱신)
+  setTimeout(refreshAcct, 600);                    // 구매분 썼을 수 있으니 갱신
   toast(`전체 공격 보냄 → (${fxLabel()})`);
 };
 $('atkOne').onclick = () => {
   if (!selected) return toast('상대를 먼저 클릭하세요');
   if (myCred < 1) return toast('공격권이 없습니다');
   const name = (roster.find((p) => p.id === selected) || {}).name || '상대';
-  window.api.cmd({ t: 'attack', kind: 'target', targetId: selected, customText: $('customText').value.trim(), effect: selectedFx });
-  myCred -= 1; $('cred').textContent = myCred;
+  window.api.cmd({ t: 'attack', kind: 'target', targetId: selected, customText: $('customText').value.trim(), effect: selectedFx, token: authToken });
+  $('cred').textContent = Math.max(0, myCred - 1);
+  setTimeout(refreshAcct, 600);
   toast(`${name}에게 공격 보냄 → (${fxLabel()})`);
 };
 $('shBlock').onclick = () => window.api.cmd({ t: 'shield', mode: 'block' });
 $('shReflect').onclick = () => window.api.cmd({ t: 'shield', mode: 'reflect' });
-$('buy').onclick = () => window.api.cmd({ t: 'buy', n: 3 });
+$('buy').onclick = async () => {
+  if (!authToken) return toast('현질은 카카오 로그인 후 가능해요');
+  await window.api.cmd({ t: 'buy', n: 3, token: authToken });
+  setTimeout(refreshAcct, 500);
+};
 
 // ===== 카카오 로그인 (선택) =====
 // 위젯은 서버에서 로드되므로 location.origin이 곧 우리 서버다. 같은 출처라 바로 호출 가능.
@@ -121,8 +129,9 @@ async function refreshAcct() {
   try {
     const r = await fetch(`${AUTH_BASE}/api/auth/me?token=${encodeURIComponent(authToken)}&t=${Date.now()}`);
     const j = await r.json();
-    if (j.loggedIn) { $('acctName').textContent = `${j.name}님 · 구매 ${j.purchased || 0}`; $('loginBtn').textContent = '로그아웃'; }
-    else { authToken = ''; try { localStorage.removeItem('sw_token'); } catch {} $('acctName').textContent = '로그인 안 됨'; $('loginBtn').textContent = '카카오 로그인'; }
+    if (j.loggedIn) { acctPurchased = j.purchased || 0; $('acctName').textContent = `${j.name}님 · 구매 ${acctPurchased}`; $('loginBtn').textContent = '로그아웃'; }
+    else { authToken = ''; try { localStorage.removeItem('sw_token'); } catch {} acctPurchased = 0; $('acctName').textContent = '로그인 안 됨'; $('loginBtn').textContent = '카카오 로그인'; }
+    updateCred();
   } catch {}
 }
 

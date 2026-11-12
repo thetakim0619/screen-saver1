@@ -60,7 +60,7 @@ function maybeDailyReset(p, now = Date.now()) {
   if (p.lastDailyReset !== key) {
     p.lastDailyReset = key;
     p.credits = CONFIG.DAILY_CREDITS;
-    p.purchased = 0;
+    // 구매 공격권(purchased)은 계정에 보관되므로 일일 초기화에서 건드리지 않는다
     p.hp = CONFIG.MAX_HP;
     p.dmgToday = 0;
     p.alive = true;
@@ -73,15 +73,16 @@ function totalCredits(p) {
   return p.credits + p.purchased;
 }
 
-// 공격권 1 차감. 구매분을 먼저 쓰고, 썼으면 purchasedUsed=true (현질 공격 표시용)
+// 공격권 1 차감. 무료(매일 주는 것)를 먼저 쓰고, 다 떨어지면 구매분을 쓴다.
+// 구매분을 썼으면 purchased=true (현질 공격 표시용)
 function spendCredit(p) {
-  if (p.purchased > 0) {
-    p.purchased -= 1;
-    return { ok: true, purchased: true };
-  }
   if (p.credits > 0) {
     p.credits -= 1;
     return { ok: true, purchased: false };
+  }
+  if (p.purchased > 0) {
+    p.purchased -= 1;
+    return { ok: true, purchased: true };
   }
   return { ok: false };
 }
