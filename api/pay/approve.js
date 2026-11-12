@@ -4,8 +4,9 @@
 const A = require('../_auth');
 const { kvGet, kvSet } = require('../_store');
 
-const CID = process.env.KAKAOPAY_CID || 'TC0ONETIME';
-const SECRET = process.env.KAKAOPAY_SECRET_KEY || '';
+const clean = (s) => (s || '').replace(/["']/g, '').replace(/\s+/g, '');
+const CID = clean(process.env.KAKAOPAY_CID) || 'TC0ONETIME';
+const SECRET = clean(process.env.KAKAOPAY_SECRET_KEY);
 
 function page(title, msg) {
   return `<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

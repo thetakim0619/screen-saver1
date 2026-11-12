@@ -5,14 +5,17 @@ const A = require('../_auth');
 const { kvSet } = require('../_store');
 const { readJson, send } = require('../_http');
 
-const CID = process.env.KAKAOPAY_CID || 'TC0ONETIME';
-const SECRET = process.env.KAKAOPAY_SECRET_KEY || '';
+// env 값에 섞일 수 있는 따옴표·공백·줄바꿈 제거 (시크릿키는 대문자+숫자뿐)
+const clean = (s) => (s || '').replace(/["']/g, '').replace(/\s+/g, '');
+const CID = clean(process.env.KAKAOPAY_CID) || 'TC0ONETIME';
+const SECRET = clean(process.env.KAKAOPAY_SECRET_KEY);
 const PRICE = Number(process.env.SW_PRICE || 500); // 장당 원
 
 module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return send(res, 200, {});
   if (req.method !== 'POST') return send(res, 405, { error: 'POST only' });
   if (!SECRET) return send(res, 500, { error: '서버에 KAKAOPAY_SECRET_KEY(dev)가 설정되지 않았어요' });
+  if (SECRET.length < 30) return send(res, 500, { error: `서버 시크릿키가 ${SECRET.length}자예요 — dev Secret key(대문자+숫자 약 40자)가 맞는지 확인하세요. Client Secret(20자)이나 Client ID가 아닌지 보세요.` });
 
   const b = await readJson(req);
   const uid = await A.resolveToken(b.token);
