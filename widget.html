@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<style>
+  :root { --bg:#17181a; --card:#202225; --line:#2c2f33; --fg:#e6e6e6; --mut:#8a8f96;
+          --red:#d8352b; --red2:#a8271f; --blue:#3b6fe0; --gold:#d8a21a; --slate:#363f4d; }
+  * { box-sizing:border-box; font-family:'Pretendard','Malgun Gothic',system-ui,sans-serif; }
+  html,body { margin:0; height:100%; background:transparent; color:var(--fg);
+              -webkit-user-select:none; cursor:default; overflow:hidden; }
+
+  /* ===== 최소화된 알약 ===== */
+  #pill { display:none; width:100%; height:100%; align-items:center; gap:6px;
+          background:rgba(23,24,26,.92); border:1px solid var(--line); border-radius:16px;
+          padding:0 10px; cursor:pointer; -webkit-app-region:drag; }
+  #pill .dot { width:7px; height:7px; border-radius:50%; background:#555; flex:0 0 auto; }
+  #pill .dot.on { background:#3ac267; }
+  #pill b { font-size:10px; letter-spacing:.5px; color:var(--mut); }
+  #pill .c { margin-left:auto; font-size:11px; font-weight:700; color:var(--gold); }
+  body.min #pill { display:flex; }
+  body.min #app { display:none; }
+
+  /* ===== 펼친 패널 ===== */
+  #app { height:100%; background:var(--bg); border:1px solid var(--line); border-radius:11px;
+         display:flex; flex-direction:column; overflow:hidden; box-shadow:0 8px 22px rgba(0,0,0,.45); }
+  .bar { -webkit-app-region:drag; padding:7px 9px; display:flex; align-items:center; gap:6px;
+         background:var(--card); border-bottom:1px solid var(--line); }
+  .bar .dot { width:7px; height:7px; border-radius:50%; background:#555; }
+  .bar .dot.on { background:#3ac267; }
+  .bar b { font-size:11px; letter-spacing:.5px; }
+  .bar .me { margin-left:auto; font-size:10px; color:var(--mut); }
+  .bar .min { -webkit-app-region:no-drag; width:18px; height:18px; line-height:16px; text-align:center;
+              border-radius:5px; background:#2c2f33; color:var(--mut); font-size:13px; cursor:pointer; margin-left:6px; }
+  .bar .min:hover { background:#3a3e44; color:#fff; }
+  .wrap { padding:9px; overflow:auto; flex:1; }
+  .stat { display:flex; gap:6px; margin-bottom:8px; }
+  .stat .box { flex:1; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:6px 8px; }
+  .stat .k { font-size:9px; color:var(--mut); }
+  .stat .v { font-size:15px; font-weight:700; }
+  .v.cred { color:var(--gold); } .v.hp { color:var(--red); }
+  .sec { font-size:9px; color:var(--mut); margin:9px 0 5px; letter-spacing:.5px; }
+  .roster { display:flex; flex-direction:column; gap:3px; }
+  .pl { display:flex; align-items:center; gap:6px; background:var(--card); border:1px solid var(--line);
+        border-radius:7px; padding:5px 7px; font-size:11px; cursor:pointer; }
+  .pl.sel { border-color:var(--red); }
+  .pl .nm { flex:1; } .pl .me-tag{ font-size:8px; color:var(--mut); }
+  .pl .hpbar { width:38px; height:4px; background:#333; border-radius:3px; overflow:hidden; }
+  .pl .hpbar i { display:block; height:100%; background:var(--red); }
+  .btns { display:flex; gap:5px; margin-top:3px; }
+  button { flex:1; border:none; border-radius:7px; padding:8px 6px; font-size:11px; font-weight:700;
+           color:#fff; cursor:pointer; }
+  .atk-all { background:var(--red); } .atk-one { background:var(--red2); }
+  .sh-block { background:var(--slate); } .sh-reflect { background:var(--blue); }
+  .buy { background:var(--gold); color:#1a1a1a; }
+  input { width:100%; background:#111214; border:1px solid var(--line); color:var(--fg);
+          border-radius:7px; padding:7px; font-size:11px; margin-top:5px; }
+  .custom { display:none; } .custom.show { display:block; }
+  #toast { position:absolute; left:9px; right:9px; bottom:8px; background:#000; border:1px solid var(--line);
+           border-radius:7px; padding:7px 9px; font-size:10px; opacity:0; transition:.2s; pointer-events:none; }
+  #toast.show { opacity:1; }
+  #setup { display:none; padding:11px; }
+  #setup.show { display:block; }
+  #setup h3 { margin:2px 0 2px; font-size:13px; }
+  #setup p { font-size:10px; color:var(--mut); margin:0 0 8px; line-height:1.4; }
+  #setup button { margin-top:9px; background:var(--red); }
+  .hint { font-size:9px; color:var(--mut); margin-top:9px; line-height:1.5; }
+</style>
+</head>
+<body>
+  <!-- 최소화 알약 -->
+  <div id="pill"><span class="dot" id="pillDot"></span><b>SW</b><span class="c" id="pillCred">0</span></div>
+
+  <!-- 펼친 패널 -->
+  <div id="app">
+    <div class="bar">
+      <span class="dot" id="dot"></span><b>SCREEN WAR</b>
+      <span class="me" id="meName">—</span>
+      <span class="min" id="minBtn" title="최소화">–</span>
+    </div>
+
+    <div id="setup">
+      <h3>입장</h3>
+      <p>내 이름과 방 코드만 넣으면 됩니다. 친구들끼리 같은 코드를 쓰면 한 방에 모입니다.</p>
+      <input id="su-name" placeholder="내 이름" maxlength="16" />
+      <div style="display:flex; gap:5px; align-items:center;">
+        <input id="su-room" placeholder="방 코드" style="flex:1" />
+        <button id="su-make" style="flex:0 0 auto; width:64px; margin-top:5px; background:var(--slate);">방 만들기</button>
+      </div>
+      <button id="su-save">입장하기</button>
+      <div class="hint">최소화는 오른쪽 위 – 버튼. 보스키 Ctrl+Shift+` · 비상해제 Ctrl+Shift+Esc</div>
+    </div>
+
+    <div class="wrap" id="game" style="display:none">
+      <div class="stat">
+        <div class="box"><div class="k">공격권</div><div class="v cred" id="cred">0</div></div>
+        <div class="box"><div class="k">체력</div><div class="v hp" id="hp">100</div></div>
+      </div>
+      <div class="sec">상대 (지정 공격하려면 클릭)</div>
+      <div class="roster" id="roster"></div>
+      <div class="sec">공격</div>
+      <input class="custom" id="customText" placeholder="지정 공격 문장 (비우면 랜덤)" maxlength="40" />
+      <div class="btns">
+        <button class="atk-all" id="atkAll">전체 공격</button>
+        <button class="atk-one" id="atkOne">지정 공격</button>
+      </div>
+      <div class="sec">방어 (미리 걸어두기)</div>
+      <div class="btns">
+        <button class="sh-block" id="shBlock">막기 방패</button>
+        <button class="sh-reflect" id="shReflect">반사 방패</button>
+      </div>
+      <div class="sec">공격권 부족하면</div>
+      <div class="btns"><button class="buy" id="buy">현질 +3</button></div>
+    </div>
+    <div id="toast"></div>
+  </div>
+<script src="widget.js"></script>
+</body>
+</html>
