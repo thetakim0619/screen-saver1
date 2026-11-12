@@ -9,18 +9,10 @@
   html,body { margin:0; height:100%; background:transparent; color:var(--fg);
               -webkit-user-select:none; cursor:default; overflow:hidden; }
 
-  /* ===== 최소화된 알약 ===== */
-  #pill { display:none; width:100%; height:100%; align-items:center; gap:6px;
-          background:rgba(23,24,26,.92); border:1px solid var(--line); border-radius:16px;
-          padding:0 10px; cursor:pointer; -webkit-app-region:drag; }
-  #pill .dot { width:7px; height:7px; border-radius:50%; background:#555; flex:0 0 auto; }
-  #pill .dot.on { background:#3ac267; }
-  #pill b { font-size:10px; letter-spacing:.5px; color:var(--mut); }
-  #pill .c { margin-left:auto; font-size:11px; font-weight:700; color:var(--gold); }
-  body.min #pill { display:flex; }
-  body.min #app { display:none; }
+  /* ===== 접힘(제목줄만) ===== */
+  body.collapsed .wrap, body.collapsed #setup, body.collapsed #toast { display:none !important; }
 
-  /* ===== 펼친 패널 ===== */
+  /* ===== 패널 ===== */
   #app { height:100%; background:var(--bg); border:1px solid var(--line); border-radius:11px;
          display:flex; flex-direction:column; overflow:hidden; box-shadow:0 8px 22px rgba(0,0,0,.45); }
   .bar { -webkit-app-region:drag; padding:7px 9px; display:flex; align-items:center; gap:6px;
@@ -67,15 +59,12 @@
 </style>
 </head>
 <body>
-  <!-- 최소화 알약 -->
-  <div id="pill"><span class="dot" id="pillDot"></span><b>SW</b><span class="c" id="pillCred">0</span></div>
-
-  <!-- 펼친 패널 -->
   <div id="app">
     <div class="bar">
       <span class="dot" id="dot"></span><b>SCREEN WAR</b>
+      <span style="font-size:8px;color:var(--mut);margin-left:2px">v1.6</span>
       <span class="me" id="meName">—</span>
-      <span class="min" id="minBtn" title="최소화">–</span>
+      <span class="min" id="minBtn" title="접기/펼치기">–</span>
     </div>
 
     <div id="setup">

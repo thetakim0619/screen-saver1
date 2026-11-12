@@ -3,7 +3,7 @@ const $ = (id) => document.getElementById(id);
 let me = null, roster = [], selected = null, config = null;
 
 const EXPANDED = { w: 212, h: 340 };
-const PILL = { w: 72, h: 30 };
+const COLLAPSED = { w: 212, h: 34 };
 
 function toast(msg) {
   const t = $('toast'); t.textContent = msg; t.classList.add('show');
@@ -15,9 +15,11 @@ function showSetup(show) {
   $('game').style.display = show ? 'none' : 'block';
 }
 
-function setMinimized(min) {
-  document.body.classList.toggle('min', min);
-  window.api.cmd({ t: 'resize-widget', w: min ? PILL.w : EXPANDED.w, h: min ? PILL.h : EXPANDED.h });
+function setCollapsed(collapsed) {
+  document.body.classList.toggle('collapsed', collapsed);
+  $('minBtn').textContent = collapsed ? '+' : '–';
+  const s = collapsed ? COLLAPSED : EXPANDED;
+  window.api.cmd({ t: 'resize-widget', w: s.w, h: s.h });
 }
 
 function randomCode(n = 5) {
@@ -45,9 +47,7 @@ function renderRoster() {
 }
 
 window.api.onConn(({ status }) => {
-  const on = status === 'online';
-  $('dot').classList.toggle('on', on);
-  $('pillDot').classList.toggle('on', on);
+  $('dot').classList.toggle('on', status === 'online');
 });
 window.api.onNeedSetup((c) => {
   config = c; showSetup(true);
@@ -59,8 +59,8 @@ window.api.onServer((m) => {
   else if (m.t === 'state') {
     roster = m.roster || [];
     if (m.you) {
-      const c = m.you.credits + m.you.purchased;
-      $('cred').textContent = c; $('hp').textContent = m.you.hp; $('pillCred').textContent = c;
+      $('cred').textContent = m.you.credits + m.you.purchased;
+      $('hp').textContent = m.you.hp;
     }
     renderRoster();
   }
@@ -70,9 +70,8 @@ window.api.onServer((m) => {
   else if (m.t === 'hit') toast(`맞았다! -${m.dmg}`);
 });
 
-// 최소화 / 펼치기
-$('minBtn').onclick = () => setMinimized(true);
-$('pill').onclick = () => setMinimized(false);
+// 제목줄 버튼으로 접기/펼치기 (이 버튼은 작동 확인됨)
+$('minBtn').onclick = () => setCollapsed(!document.body.classList.contains('collapsed'));
 
 // 설정/게임 버튼
 $('su-make').onclick = () => { $('su-room').value = randomCode(); toast('방 코드 생성, 친구에게 공유하세요'); };
