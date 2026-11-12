@@ -82,15 +82,16 @@
   .meltAnim { animation: meltDown 1.5s ease-in both, meltSway 3.2s ease-in-out .2s infinite; }
 
   /* 복구 미션 (깨진 화면 위) */
-  #recover { position:fixed; left:50%; top:52%; transform:translate(-50%,-50%); width:460px;
-     background:#101010; color:#fff; border:1px solid #333; border-radius:10px; padding:16px; display:none; }
+  /* 복구 미션 — 방어 미션(#mission)과 같은 오른쪽 아래 위치·크기 */
+  #recover { position:fixed; right:18px; bottom:18px; width:260px;
+     background:#101010; color:#fff; border:1px solid #333; border-radius:7px; padding:12px; display:none; }
   #recover.show { display:block; }
-  #recover .r-title { font-size:13px; color:#e4342a; margin-bottom:6px; letter-spacing:1px; }
-  #recover .r-text { font-size:20px; font-weight:700; margin-bottom:10px; }
+  #recover .r-title { font-size:11px; color:#e4342a; margin-bottom:6px; letter-spacing:.5px; }
+  #recover .r-text { font-size:15px; font-weight:700; margin-bottom:8px; }
   #recover .r-text .typed { color:#3ac267; }
-  #r-input { width:100%; font-size:16px; padding:9px 10px; border:1px solid #333; background:#000; color:#fff;
-     border-radius:6px; outline:none; }
-  #recover .r-time { height:5px; background:#222; border-radius:3px; margin-top:10px; overflow:hidden; }
+  #r-input { width:100%; font-size:13px; padding:7px 8px; border:1px solid #333; background:#000; color:#fff;
+     border-radius:5px; outline:none; }
+  #recover .r-time { height:4px; background:#222; border-radius:3px; margin-top:8px; overflow:hidden; }
   #recover .r-time i { display:block; height:100%; width:100%; background:#e4342a; }
   .esc-hint { position:fixed; left:8px; bottom:6px; font-size:10px; color:rgba(255,255,255,.35); }
 </style>
