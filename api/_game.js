@@ -114,7 +114,7 @@ function nextAttackId() {
 // 방패(block/reflect)는 미션이 뜨기 전에 먼저 소모된다.
 function attack(room, attackerId, { kind, targetId, customText, effect, customUrl }, now = Date.now()) {
   const useCustom = effect === 'custom' && customUrl; // 공격자가 올린 커스텀 이미지
-  const fx = useCustom ? 'custom' : (['crack', 'glitch', 'melt', 'bsod'].includes(effect) ? effect : null); // 공격자가 고른 연출(없으면 랜덤)
+  const fx = useCustom ? 'custom' : (['crack', 'glitch', 'melt', 'bsod', 'cute1', 'cute2'].includes(effect) ? effect : null); // 공격자가 고른 연출(없으면 랜덤)
   const cUrl = useCustom ? customUrl : null;
   const attacker = room.players[attackerId];
   if (!attacker) return { ok: false, reason: 'no_attacker' };

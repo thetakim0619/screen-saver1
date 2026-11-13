@@ -125,11 +125,46 @@ function videoLayer(url, loop) {
   return wrap;
 }
 
+// ---- 귀여운 연출 (스티커 폭탄 / 뿅 캐릭터) ----
+function stickerSVG(kind, c) {
+  if (kind === 'heart') return `<svg viewBox="0 0 24 24"><path d="M12 21C3 15 2 9.5 5.5 7.2 8 5.6 11 7.6 12 9.4 13 7.6 16 5.6 18.5 7.2 22 9.5 21 15 12 21Z" fill="${c}" stroke="#fff" stroke-width="1.4"/></svg>`;
+  if (kind === 'star') return `<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.1 6.6.8-4.9 4.5 1.3 6.6L12 17.8 6.1 20.6l1.3-6.6L2.5 8.9l6.6-.8Z" fill="${c}" stroke="#fff" stroke-width="1.3"/></svg>`;
+  if (kind === 'flower') return `<svg viewBox="0 0 24 24"><g fill="${c}" stroke="#fff" stroke-width="1.1">${[0, 72, 144, 216, 288].map((a) => `<ellipse cx="12" cy="5.5" rx="3.3" ry="4.2" transform="rotate(${a} 12 12)"/>`).join('')}</g><circle cx="12" cy="12" r="3.1" fill="#fff3b0" stroke="#fff" stroke-width="1.1"/></svg>`;
+  if (kind === 'cat') return `<svg viewBox="0 0 24 24"><g fill="${c}" stroke="#fff" stroke-width="1.2"><path d="M6 5l3 3.5M18 5l-3 3.5"/><circle cx="12" cy="13" r="8"/></g><circle cx="9.3" cy="12" r="1.1" fill="#3a2b3a"/><circle cx="14.7" cy="12" r="1.1" fill="#3a2b3a"/><path d="M11 15q1 1 2 0" stroke="#3a2b3a" stroke-width="1" fill="none" stroke-linecap="round"/><circle cx="7.6" cy="14.5" r="1.3" fill="#ff9ec4"/><circle cx="16.4" cy="14.5" r="1.3" fill="#ff9ec4"/></svg>`;
+  return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="${c}" stroke="#fff" stroke-width="1.4"/><circle cx="9" cy="10.5" r="1.3" fill="#3a2b3a"/><circle cx="15" cy="10.5" r="1.3" fill="#3a2b3a"/><path d="M8.5 14.5q3.5 3 7 0" stroke="#3a2b3a" stroke-width="1.4" fill="none" stroke-linecap="round"/><circle cx="6.8" cy="13.5" r="1.4" fill="#ff9ec4" opacity=".8"/><circle cx="17.2" cy="13.5" r="1.4" fill="#ff9ec4" opacity=".8"/></svg>`;
+}
+function mochiSVG() {
+  return `<svg viewBox="0 0 120 110"><ellipse cx="60" cy="96" rx="34" ry="8" fill="rgba(0,0,0,.12)"/><ellipse cx="60" cy="60" rx="46" ry="42" fill="#b8e0ff" stroke="#fff" stroke-width="4"/><circle cx="44" cy="56" r="5.5" fill="#33303a"/><circle cx="76" cy="56" r="5.5" fill="#33303a"/><circle cx="45.6" cy="54" r="1.8" fill="#fff"/><circle cx="77.6" cy="54" r="1.8" fill="#fff"/><circle cx="36" cy="66" r="6" fill="#ff9ec4" opacity=".85"/><circle cx="84" cy="66" r="6" fill="#ff9ec4" opacity=".85"/><path d="M53 68q7 7 14 0" stroke="#33303a" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
+}
+function buildCute(host, kind) {
+  const wrap = document.createElement('div'); wrap.className = 'cute';
+  const u = Math.max(4, (host.clientHeight || 400) / 100); wrap.style.setProperty('--u', u + 'px');
+  if (kind === 'cute2') {
+    const m = document.createElement('div'); m.className = 'mochi'; m.innerHTML = mochiSVG(); wrap.appendChild(m);
+    for (let i = 0; i < 9; i++) { const s = document.createElement('div'); s.className = 'spark'; s.textContent = '✦'; s.style.left = (Math.random() * 88 + 4) + '%'; s.style.top = (Math.random() * 78 + 3) + '%'; s.style.animationDelay = (Math.random() * 1.2) + 's'; wrap.appendChild(s); }
+    const b = document.createElement('div'); b.className = 'cbubble'; b.textContent = '잡았다 ♥'; b.style.top = '30%'; wrap.appendChild(b);
+  } else {
+    const shapes = ['heart', 'star', 'flower', 'smiley', 'cat'];
+    const colors = ['#ff8fab', '#ffd166', '#8bd3e6', '#a0e8af', '#ffafcc', '#bdb2ff', '#9bf6ff', '#ffc6ff'];
+    for (let i = 0; i < 18; i++) {
+      const s = document.createElement('div'); s.className = 'sticker';
+      const sz = u * (5 + Math.random() * 5.5); s.style.width = s.style.height = sz + 'px';
+      s.style.left = (Math.random() * 90 + 2) + '%'; s.style.top = (Math.random() * 82 + 4) + '%';
+      s.style.setProperty('--r', (Math.random() * 60 - 30) + 'deg'); s.style.animationDelay = (Math.random() * 0.9) + 's';
+      s.innerHTML = stickerSVG(shapes[i % shapes.length], colors[i % colors.length]); wrap.appendChild(s);
+    }
+    const b = document.createElement('div'); b.className = 'cbubble'; b.textContent = '당했다!'; wrap.appendChild(b);
+  }
+  return wrap;
+}
+
 function playEffect(kind, customUrl) {
   const fx = $('fx'); stopFx(); fx.innerHTML = ''; fx.classList.remove('shake'); fx.classList.add('show');
   setActive(true);
   $('escHint').style.display = 'block';
-  if (kind === 'custom' && customUrl) {
+  if (kind === 'cute1' || kind === 'cute2') {
+    fx.appendChild(buildCute(fx, kind));
+  } else if (kind === 'custom' && customUrl) {
     // 공격자가 올린 이미지를 화면 전체에 띄운다(화면 점령)
     const d = document.createElement('div'); d.className = 'fximg custimg';
     d.style.backgroundImage = `url("${customUrl}")`;

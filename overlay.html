@@ -65,6 +65,27 @@
   video.fximg { width:100%; height:100%; object-fit:cover; }
   .fxcanvas { width:100%; height:100%; object-fit:cover; display:block; }
   #fx .custimg { background-color:#000; background-size:contain; background-position:center; background-repeat:no-repeat; }
+
+  /* ===== 귀여운 연출 (스티커 폭탄 / 뿅 캐릭터) ===== */
+  .cute { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+  .cute .sticker { position:absolute; transform:scale(0); animation: cPop .5s cubic-bezier(.34,1.56,.64,1) both, cWob 2.2s ease-in-out infinite; }
+  .cute .sticker svg { width:100%; height:100%; display:block; filter:drop-shadow(0 2px 2px rgba(0,0,0,.25)); }
+  @keyframes cPop { 0%{transform:scale(0) rotate(var(--r,0deg))} 60%{transform:scale(1.25) rotate(var(--r,0deg))} 100%{transform:scale(1) rotate(var(--r,0deg))} }
+  @keyframes cWob { 0%,100%{margin-top:0} 50%{margin-top:-4px} }
+  .cute .cbubble { position:absolute; left:50%; top:44%; transform:translate(-50%,-50%) scale(0);
+    background:#fff; color:#ff5d8f; font-weight:800; font-size:calc(var(--u,6px)*7); line-height:1;
+    padding:calc(var(--u,6px)*.35) calc(var(--u,6px)*.8); border-radius:999px; border:calc(var(--u,6px)*.5) solid #ffd1e0;
+    box-shadow:0 8px 22px rgba(0,0,0,.25); white-space:nowrap; font-family:'Pretendard','Malgun Gothic',system-ui,sans-serif;
+    animation: cBub .6s .25s cubic-bezier(.34,1.8,.64,1) both, cWob 1.8s .9s ease-in-out infinite; }
+  @keyframes cBub { 0%{transform:translate(-50%,-50%) scale(0) rotate(-8deg)} 70%{transform:translate(-50%,-50%) scale(1.15) rotate(3deg)} 100%{transform:translate(-50%,-50%) scale(1) rotate(0)} }
+  .cute .mochi { position:absolute; left:50%; bottom:7%; width:calc(var(--u,6px)*42); transform:translateX(-50%);
+    animation: cRise .55s cubic-bezier(.34,1.56,.64,1) both, cBoing 1.6s .7s ease-in-out infinite; }
+  .cute .mochi svg { width:100%; height:auto; display:block; filter:drop-shadow(0 10px 18px rgba(0,0,0,.3)); }
+  @keyframes cRise { 0%{transform:translate(-50%,130%)} 100%{transform:translate(-50%,0)} }
+  @keyframes cBoing { 0%,100%{transform:translate(-50%,0)} 50%{transform:translate(-50%,-12px)} }
+  .cute .spark { position:absolute; color:#fff3b0; font-size:calc(var(--u,6px)*5); opacity:0; text-shadow:0 0 8px #ffd166;
+    animation: cTwk 1.4s ease-in-out infinite; }
+  @keyframes cTwk { 0%,100%{opacity:0;transform:scale(.4)} 50%{opacity:1;transform:scale(1.2)} }
   .fx-flash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; }
   #fx.shake { animation: fxshake .5s cubic-bezier(.36,.07,.19,.97) both; }
   @keyframes fxshake { 10%,90%{transform:translate(-2px,1px)} 20%,80%{transform:translate(5px,-2px)}
