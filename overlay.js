@@ -136,22 +136,31 @@ function stickerSVG(kind, c) {
 function mochiSVG() {
   return `<svg viewBox="0 0 120 110"><ellipse cx="60" cy="96" rx="34" ry="8" fill="rgba(0,0,0,.12)"/><ellipse cx="60" cy="60" rx="46" ry="42" fill="#b8e0ff" stroke="#fff" stroke-width="4"/><circle cx="44" cy="56" r="5.5" fill="#33303a"/><circle cx="76" cy="56" r="5.5" fill="#33303a"/><circle cx="45.6" cy="54" r="1.8" fill="#fff"/><circle cx="77.6" cy="54" r="1.8" fill="#fff"/><circle cx="36" cy="66" r="6" fill="#ff9ec4" opacity=".85"/><circle cx="84" cy="66" r="6" fill="#ff9ec4" opacity=".85"/><path d="M53 68q7 7 14 0" stroke="#33303a" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
 }
+const CUTE_SHAPES = ['heart', 'star', 'flower', 'smiley', 'cat'];
+const CUTE_COLORS = ['#ff8fab', '#ffd166', '#8bd3e6', '#a0e8af', '#ffafcc', '#bdb2ff', '#9bf6ff', '#ffc6ff'];
 function buildCute(host, kind) {
   const wrap = document.createElement('div'); wrap.className = 'cute';
   const u = Math.max(4, (host.clientHeight || 400) / 100); wrap.style.setProperty('--u', u + 'px');
   if (kind === 'cute2') {
-    const m = document.createElement('div'); m.className = 'mochi'; m.innerHTML = mochiSVG(); wrap.appendChild(m);
-    for (let i = 0; i < 9; i++) { const s = document.createElement('div'); s.className = 'spark'; s.textContent = '✦'; s.style.left = (Math.random() * 88 + 4) + '%'; s.style.top = (Math.random() * 78 + 3) + '%'; s.style.animationDelay = (Math.random() * 1.2) + 's'; wrap.appendChild(s); }
-    const b = document.createElement('div'); b.className = 'cbubble'; b.textContent = '잡았다 ♥'; b.style.top = '30%'; wrap.appendChild(b);
+    // 스티커 비 — 화면 위에서 우르르 쏟아진다
+    for (let i = 0; i < 44; i++) {
+      const s = document.createElement('div'); s.className = 'raindrop';
+      const sz = u * (4.5 + Math.random() * 5); s.style.width = s.style.height = sz + 'px';
+      s.style.left = (Math.random() * 97) + '%';
+      const dur = 1.2 + Math.random() * 1.3;
+      s.style.setProperty('--spin', (Math.random() * 720 - 360) + 'deg');
+      s.style.animation = `cFall ${dur}s linear ${(-Math.random() * dur * 2).toFixed(2)}s infinite`;
+      s.innerHTML = stickerSVG(CUTE_SHAPES[i % CUTE_SHAPES.length], CUTE_COLORS[i % CUTE_COLORS.length]);
+      wrap.appendChild(s);
+    }
   } else {
-    const shapes = ['heart', 'star', 'flower', 'smiley', 'cat'];
-    const colors = ['#ff8fab', '#ffd166', '#8bd3e6', '#a0e8af', '#ffafcc', '#bdb2ff', '#9bf6ff', '#ffc6ff'];
+    // 스티커 폭탄 — 팡팡 팝업
     for (let i = 0; i < 18; i++) {
       const s = document.createElement('div'); s.className = 'sticker';
       const sz = u * (5 + Math.random() * 5.5); s.style.width = s.style.height = sz + 'px';
       s.style.left = (Math.random() * 90 + 2) + '%'; s.style.top = (Math.random() * 82 + 4) + '%';
       s.style.setProperty('--r', (Math.random() * 60 - 30) + 'deg'); s.style.animationDelay = (Math.random() * 0.9) + 's';
-      s.innerHTML = stickerSVG(shapes[i % shapes.length], colors[i % colors.length]); wrap.appendChild(s);
+      s.innerHTML = stickerSVG(CUTE_SHAPES[i % CUTE_SHAPES.length], CUTE_COLORS[i % CUTE_COLORS.length]); wrap.appendChild(s);
     }
     const b = document.createElement('div'); b.className = 'cbubble'; b.textContent = '당했다!'; wrap.appendChild(b);
   }

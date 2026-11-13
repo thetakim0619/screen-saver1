@@ -6,7 +6,7 @@ let myDnd = false, curRoom = '', curName = '';
 let selectedCustomId = null, customs = [], myUid = '';
 const PAYMENTS_ON = false; // 사업자 전까지 결제 숨김. 나중에 true로.
 function updateCred() { myCred = myFree + acctPurchased; $('cred').textContent = myCred; }
-const FX_NAMES = { '': '랜덤', crack: '유리 깨짐', glitch: '글리치', melt: '녹아내림', bsod: '블루스크린', cute1: '귀염 스티커', cute2: '귀염 캐릭터' };
+const FX_NAMES = { '': '랜덤', crack: '유리 깨짐', glitch: '글리치', melt: '녹아내림', bsod: '블루스크린', cute1: '귀염 스티커', cute2: '스티커 비' };
 
 const EXPANDED = { w: 212, h: 340 };
 const COLLAPSED = { w: 212, h: 34 };
