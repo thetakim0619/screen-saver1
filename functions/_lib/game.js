@@ -60,7 +60,8 @@ function regenConfig(env) {
   return {
     hours: num(env.SW_REGEN_HOURS, CONFIG.REGEN_HOURS),
     amount: num(env.SW_REGEN_AMOUNT, CONFIG.REGEN_AMOUNT),
-    cap: num(env.SW_REGEN_CAP, CONFIG.REGEN_CAP),
+    // 테스트 기간(SW_OPEN != true)엔 기본 무제한(0), 본 오픈 후엔 기본 상한 적용
+    cap: num(env.SW_REGEN_CAP, env.SW_OPEN === 'true' ? CONFIG.REGEN_CAP : 0),
   };
 }
 
@@ -69,12 +70,14 @@ function maybeRegen(p, rc, now = Date.now()) {
   if (!rc || rc.amount <= 0 || rc.hours <= 0) return false;
   if (p.lastRegen == null) p.lastRegen = now;
   const interval = rc.hours * 3600000;
-  if (p.credits >= rc.cap) { p.lastRegen = now; return false; } // 가득이면 타이머만 리셋
+  const capped = rc.cap > 0 && isFinite(rc.cap); // cap <= 0 이면 상한 없음
+  if (capped && p.credits >= rc.cap) { p.lastRegen = now; return false; } // 가득이면 타이머만 리셋
   const elapsed = now - p.lastRegen;
   if (elapsed < interval) return false;
   const ticks = Math.floor(elapsed / interval);
   const before = p.credits;
-  p.credits = Math.min(rc.cap, p.credits + ticks * rc.amount);
+  const add = ticks * rc.amount;
+  p.credits = capped ? Math.min(rc.cap, p.credits + add) : p.credits + add;
   p.lastRegen += ticks * interval; // 쓴 간격만큼만 당겨 나머지 시간 보존
   return p.credits > before;
 }
@@ -85,7 +88,8 @@ function maybeDailyReset(p, now = Date.now()) {
   const key = todayKey(now);
   if (p.lastDailyReset !== key) {
     p.lastDailyReset = key;
-    p.credits = CONFIG.DAILY_CREDITS;
+    p.credits = Math.max(p.credits, CONFIG.DAILY_CREDITS); // 쌓인 건 유지, 모자라면 기본치로 채움
+    p.lastRegen = now; // 하루 시작과 함께 자동 충전 타이머도 초기화(부재 후 폭증 방지)
     p.hp = CONFIG.MAX_HP;
     p.dmgToday = 0;
     p.alive = true;
