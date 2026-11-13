@@ -8,6 +8,15 @@ const PAYMENTS_ON = false; // 사업자 전까지 결제 숨김. 나중에 true�
 function updateCred() { myCred = myFree + acctPurchased; $('cred').textContent = myCred; }
 const FX_NAMES = { '': '랜덤', crack: '유리 깨짐', glitch: '글리치', melt: '녹아내림', bsod: '블루스크린', cute1: '귀염 스티커', cute2: '스티커 비' };
 
+// 첫 실행 안내 오버레이 (기기당 1회, 누르면 사라지고 입장 화면으로)
+(function () {
+  const intro = $('intro'); if (!intro) return;
+  let seen = false; try { seen = localStorage.getItem('sw_intro_seen') === '1'; } catch {}
+  if (seen) { intro.style.display = 'none'; return; }
+  intro.style.display = 'flex';
+  intro.onclick = () => { intro.style.display = 'none'; try { localStorage.setItem('sw_intro_seen', '1'); } catch {} };
+})();
+
 const EXPANDED = { w: 212, h: 340 };
 const COLLAPSED = { w: 212, h: 34 };
 

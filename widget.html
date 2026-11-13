@@ -134,13 +134,33 @@
   #rooms .foot { display:flex; gap:5px; }
   #rooms .foot button { margin:0; }
   #roomBack { width:100%; margin-top:7px; background:#2c2f33; color:var(--mut); }
+  #intro { position:fixed; inset:0; z-index:999; background:#14151a; display:none;
+    flex-direction:column; align-items:center; justify-content:center; padding:18px; text-align:center; cursor:pointer; }
+  #intro .ititle { font-size:18px; font-weight:800; letter-spacing:1px; }
+  #intro .idesc { font-size:11px; color:var(--mut); margin:4px 0 14px; }
+  #intro .ilist { list-style:none; padding:0; margin:0 0 16px; text-align:left; max-width:250px; }
+  #intro .ilist li { font-size:11px; line-height:1.5; margin:8px 0; padding-left:14px; position:relative; }
+  #intro .ilist li::before { content:'•'; position:absolute; left:2px; color:var(--red); }
+  #intro .igo { background:var(--red); color:#fff; border:none; border-radius:6px; padding:9px 24px; font-size:12px; font-weight:700; cursor:pointer; }
+  #intro .itip { font-size:9px; color:var(--mut); margin-top:10px; }
 </style>
 </head>
 <body>
+  <div id="intro">
+    <div class="ititle">SCREEN WAR</div>
+    <div class="idesc">친구들끼리 서로 화면을 부수는 장난 게임</div>
+    <ul class="ilist">
+      <li>방 코드랑 닉네임 넣고 입장 — 같은 코드를 쓰면 한 방에 모여요.</li>
+      <li>카카오 로그인하면 내 사진을 공격 화면으로 등록 (최대 2장, 공격하면 상대 전체 화면에 떠요).</li>
+      <li>회의·집중할 땐 '자리비움'을 켜두면 그동안 공격을 안 받아요.</li>
+    </ul>
+    <button class="igo" id="introGo">시작하기</button>
+    <div class="itip">화면을 누르면 시작됩니다</div>
+  </div>
   <div id="app">
     <div class="bar">
       <span class="dot" id="dot"></span><b>SCREEN WAR</b>
-      <span style="font-size:8px;color:var(--mut);margin-left:2px">v1.6</span>
+      <span style="font-size:8px;color:var(--mut);margin-left:2px">v1.7</span>
       <span class="me" id="meName">—</span>
       <span class="ico quit" id="quitBtn" title="종료">×</span>
       <span class="ico" id="minBtn" title="접기/펼치기">–</span>
