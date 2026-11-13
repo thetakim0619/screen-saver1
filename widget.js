@@ -281,6 +281,10 @@ function renderCustpick() {
     add.onclick = () => $('custFile').click();
     box.appendChild(add);
   }
+  const hint = document.createElement('div');
+  hint.className = 'custhint';
+  hint.textContent = '공격 시 상대 전체 화면에 떠요 · 최대 2장 · 과한 이미지는 자제해요';
+  box.appendChild(hint);
 }
 function selectCustom(id) {
   selectedFx = 'custom'; selectedCustomId = id;
