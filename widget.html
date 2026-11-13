@@ -98,6 +98,15 @@
   .custpick .cdel { position:absolute; top:-5px; right:-5px; width:14px; height:14px; line-height:12px; text-align:center;
                     background:#000; border:1px solid var(--line); border-radius:50%; font-size:10px; color:var(--mut); }
   .custpick .cdel:hover { color:var(--red); border-color:var(--red); }
+  .fxitem.locked { opacity:.4; position:relative; }
+  .fxitem.locked::after { content:'🔒'; position:absolute; top:2px; right:3px; font-size:8px; line-height:1; filter:drop-shadow(0 1px 1px #000); }
+  body.picking .fxitem.locked::after { content:''; }
+  body.picking .fxitem.pk { border-color:#ffb703; box-shadow:0 0 0 1px #ffb703 inset; opacity:1; }
+  .starterpick { background:#1c1510; border:1px solid var(--line); border-radius:6px; padding:6px; margin-bottom:6px; }
+  .sp-msg { font-size:9px; color:#ffcf99; margin-bottom:5px; line-height:1.45; }
+  .sp-msg b { color:#fff; }
+  .sp-btn { width:100%; padding:6px; font-size:10px; background:var(--red); color:#fff; border:none; border-radius:5px; cursor:pointer; }
+  .sp-btn:disabled { opacity:.45; cursor:default; }
   .custhint { font-size:9px; color:var(--mut); line-height:1.4; padding:2px 0; }
   #toast { position:absolute; left:9px; right:9px; bottom:8px; background:#000; border:1px solid var(--line);
            border-radius:7px; padding:7px 9px; font-size:10px; opacity:0; transition:.2s; pointer-events:none; }
@@ -183,6 +192,10 @@
         <div class="fxitem" data-fx="bsod" title="블루스크린"><span class="fxthumb t-bsod"></span><span class="lbl">블루</span></div>
         <div class="fxitem" data-fx="cute1" title="귀염 스티커"><span class="fxthumb" style="background:linear-gradient(135deg,#ffd9e6,#cdefff)"><svg viewBox="0 0 34 22" style="width:100%;height:100%"><path d="M8 16C4 13 3.5 10 5.5 8.8 7 7.9 8.5 9 9 10 9.5 9 11 7.9 12.5 8.8 14.5 10 14 13 9 16Z" fill="#ff5d8f"/><path d="M20 7l1.2 2.6 2.8.3-2.1 1.9.6 2.8L20 14.2 17.6 15.6l.5-2.8L16 10.9l2.8-.3Z" fill="#ffb703"/></svg></span><span class="lbl">귀염1</span></div>
         <div class="fxitem" data-fx="cute2" title="스티커 비 (우르르 쏟아짐)"><span class="fxthumb" style="background:linear-gradient(135deg,#cdefff,#ffd9e6)"><svg viewBox="0 0 34 22" style="width:100%;height:100%"><path d="M7 10C5 8.5 4.7 7 5.8 6.4 6.6 5.9 7.4 6.5 7.7 7 8 6.5 8.8 5.9 9.6 6.4 10.7 7 10.4 8.5 8.4 10Z" fill="#ff5d8f"/><path d="M24 4l.8 1.7 1.9.2-1.4 1.3.4 1.8L24 8.3 22.3 9l.4-1.8L21.3 5.9l1.9-.2Z" fill="#ffb703"/><path d="M15 15l.8 1.7 1.9.2-1.4 1.3.4 1.8L15 19.3 13.3 20l.4-1.8L12.3 16.9l1.9-.2Z" fill="#8bd3e6"/></svg></span><span class="lbl">스티커비</span></div>
+      </div>
+      <div class="starterpick" id="starterPick" style="display:none">
+        <div class="sp-msg">공격 화면 <b id="spN">3</b>개를 고르세요 · 나머지는 나중에 충전으로 해제</div>
+        <button class="sp-btn" id="spConfirm" disabled>선택 완료 (0/3)</button>
       </div>
       <div class="custpick" id="custpick"></div>
       <input type="file" id="custFile" accept="image/*" style="display:none" />

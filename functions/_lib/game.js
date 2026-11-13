@@ -16,6 +16,11 @@ const CONFIG = {
   MISSION_RECOVER_SEC: 6,
 };
 
+// 공격 화면(효과) 카탈로그 — 스타터팩에서 고르는 대상
+const EFFECT_CATALOG = ['crack', 'glitch', 'melt', 'bsod', 'cute1', 'cute2'];
+const STARTER_N = 3;                               // 본 오픈 후 신규 사용자가 무료로 고르는 개수
+const DEFAULT_EFFECTS = ['crack', 'glitch', 'bsod']; // 비로그인 사용자가 오픈 후 쓸 수 있는 기본 세트
+
 const PHRASES_EASY = ['오늘도 평화', '밥은 먹었니', '퇴근하고싶다', '커피 한잔', '졸리다 진짜'];
 const PHRASES_HARD = [
   '나는 이 게임에서 질 운명이다',
@@ -80,7 +85,7 @@ function nextAttackId() { _attackSeq += 1; return 'atk_' + Date.now().toString(3
 
 function attack(room, attackerId, { kind, targetId, customText, effect, customUrl }, now = Date.now()) {
   const useCustom = effect === 'custom' && customUrl;
-  const fx = useCustom ? 'custom' : (['crack', 'glitch', 'melt', 'bsod', 'cute1', 'cute2'].includes(effect) ? effect : null);
+  const fx = useCustom ? 'custom' : (EFFECT_CATALOG.includes(effect) ? effect : null);
   const cUrl = useCustom ? customUrl : null;
   const attacker = room.players[attackerId];
   if (!attacker) return { ok: false, reason: 'no_attacker' };
@@ -189,7 +194,7 @@ function buyCredits(room, playerId, n = 1) {
 }
 
 export {
-  CONFIG,
+  CONFIG, EFFECT_CATALOG, STARTER_N, DEFAULT_EFFECTS,
   newPlayer, todayKey, maybeDailyReset,
   totalCredits, spendCredit, makeMission,
   attack, resolveMission, raiseShield, setDnd, buyCredits,

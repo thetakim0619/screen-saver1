@@ -179,13 +179,80 @@ $('dndBtn').onclick = () => {
 // 연출 썸네일 선택 (기본 연출 고르면 커스텀 선택 해제)
 document.querySelectorAll('#fxpick .fxitem').forEach((el) => {
   el.onclick = () => {
-    selectedFx = el.dataset.fx || '';
+    const fx = el.dataset.fx || '';
+    if (picking) { // 스타터 고르는 중: 여러 개 토글
+      if (!fx) return toast('랜덤은 가진 화면 중에서 자동으로 떠요');
+      const i = pickSel.indexOf(fx);
+      if (i >= 0) { pickSel.splice(i, 1); el.classList.remove('pk'); }
+      else { if (pickSel.length >= fxStarterN) return toast(`${fxStarterN}개까지만 고를 수 있어요`); pickSel.push(fx); el.classList.add('pk'); }
+      updateSpBtn();
+      return;
+    }
+    if (isFxLocked(fx)) { toast('잠긴 화면이에요 · 스타터팩에서 고르거나 충전으로 해제'); return; }
+    selectedFx = fx;
     selectedCustomId = null;
     document.querySelectorAll('#fxpick .fxitem').forEach((x) => x.classList.toggle('sel', x === el));
     renderCustpick();
   };
 });
 function fxLabel() { return selectedFx === 'custom' ? '내 화면' : (FX_NAMES[selectedFx] || '랜덤'); }
+
+// ===== 공격 화면(효과) 보유 / 스타터팩 =====
+const EFFECTS_BASE = location.origin;
+let ownedEffects = null;   // null = 모름(잠금 안 함). 배열 = 보유 목록
+let fxOpen = false, fxAll = true, fxPicked = false, fxStarterN = 3;
+let picking = false, pickSel = [];
+
+function fxLockActive() { return fxOpen && !fxAll && Array.isArray(ownedEffects); }
+function isFxLocked(fx) { if (!fx || fx === 'custom') return false; if (!fxLockActive()) return false; return !ownedEffects.includes(fx); }
+
+async function refreshEffects() {
+  try {
+    const q = authToken ? `?token=${encodeURIComponent(authToken)}&t=${Date.now()}` : `?t=${Date.now()}`;
+    const r = await fetch(`${EFFECTS_BASE}/api/effects/list${q}`);
+    if (!r.ok) throw 0;
+    const j = await r.json();
+    fxOpen = !!j.open; fxAll = !!j.all; fxPicked = !!j.picked;
+    fxStarterN = j.starterN || 3;
+    ownedEffects = Array.isArray(j.owned) ? j.owned : null;
+  } catch { ownedEffects = null; fxAll = true; } // 엔드포인트 없으면(구버전) 전부 해제
+  renderFxLocks();
+  if (fxOpen && !fxAll && !fxPicked && authToken && !picking) startStarterPick(); // 오픈 후 신규
+}
+
+function renderFxLocks() {
+  document.querySelectorAll('#fxpick .fxitem').forEach((el) => {
+    el.classList.toggle('locked', isFxLocked(el.dataset.fx || ''));
+  });
+}
+
+function startStarterPick() {
+  picking = true; pickSel = [];
+  document.body.classList.add('picking');
+  $('starterPick').style.display = 'block';
+  $('spN').textContent = fxStarterN;
+  document.querySelectorAll('#fxpick .fxitem').forEach((el) => el.classList.remove('pk', 'sel'));
+  updateSpBtn();
+  toast(`공격 화면 ${fxStarterN}개를 고르세요`);
+}
+function updateSpBtn() {
+  const b = $('spConfirm');
+  b.disabled = pickSel.length === 0;
+  b.textContent = `선택 완료 (${pickSel.length}/${fxStarterN})`;
+}
+async function confirmStarter() {
+  if (!pickSel.length) return;
+  try {
+    const r = await fetch(`${EFFECTS_BASE}/api/effects/pick`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: authToken, effects: pickSel }) });
+    const j = await r.json();
+    if (!j.ok) return toast('⚠ ' + (j.error || '선택 실패'));
+    ownedEffects = j.owned || pickSel; fxPicked = true;
+    picking = false; document.body.classList.remove('picking'); $('starterPick').style.display = 'none';
+    renderFxLocks();
+    toast('공격 화면 선택 완료!');
+  } catch { toast('선택 실패'); }
+}
+$('spConfirm').onclick = confirmStarter;
 
 // ===== 커스텀 이미지(내 화면) =====
 async function refreshCustoms() {
@@ -267,6 +334,7 @@ function customOk() {
   return true;
 }
 $('atkAll').onclick = () => {
+  if (picking) return toast('먼저 공격 화면 선택을 끝내세요');
   if (myDnd) return toast('자리비움 중엔 공격할 수 없어요');
   if (myCred < 1) return toast('공격권이 없습니다');
   if (!customOk()) return;
@@ -276,6 +344,7 @@ $('atkAll').onclick = () => {
   toast(`전체 공격 보냄 → (${fxLabel()})`);
 };
 $('atkOne').onclick = () => {
+  if (picking) return toast('먼저 공격 화면 선택을 끝내세요');
   if (myDnd) return toast('자리비움 중엔 공격할 수 없어요');
   if (!selected) return toast('상대를 먼저 클릭하세요');
   if (myCred < 1) return toast('공격권이 없습니다');
@@ -320,7 +389,7 @@ let authToken = '';
 try { authToken = localStorage.getItem('sw_token') || ''; } catch {}
 
 async function refreshAcct() {
-  if (!authToken) { $('acctName').textContent = '로그인 안 됨'; $('loginBtn').textContent = '카카오 로그인'; refreshCustoms(); return; }
+  if (!authToken) { $('acctName').textContent = '로그인 안 됨'; $('loginBtn').textContent = '카카오 로그인'; refreshCustoms(); refreshEffects(); return; }
   try {
     const r = await fetch(`${AUTH_BASE}/api/auth/me?token=${encodeURIComponent(authToken)}&t=${Date.now()}`);
     const j = await r.json();
@@ -328,6 +397,7 @@ async function refreshAcct() {
     else { authToken = ''; try { localStorage.removeItem('sw_token'); } catch {} acctPurchased = 0; $('acctName').textContent = '로그인 안 됨'; $('loginBtn').textContent = '카카오 로그인'; }
     updateCred();
     refreshCustoms(); // 내 커스텀 이미지 목록 갱신
+    refreshEffects(); // 내 보유 공격 화면 갱신
     if (PAYMENTS_ON && $('paySec')) $('paySec').style.display = 'block';
   } catch {}
 }

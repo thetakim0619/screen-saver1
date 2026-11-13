@@ -20,7 +20,7 @@ export async function onRequest({ request, env }) {
   if (!player) return json({ error: '방에 없는 플레이어', gone: true }, 404);
 
   const uid = await A.resolveToken(b.token);
-  if (uid) player.userId = uid;
+  player.userId = uid || undefined; // 소유권은 현재 토큰을 따라간다(로그아웃 시 해제)
 
   let events = [];
   if (b.t === 'attack') {
@@ -31,6 +31,11 @@ export async function onRequest({ request, env }) {
       customUrl = `/api/custom/img?o=${encodeURIComponent(uid)}&id=${encodeURIComponent(b.customId)}`;
     }
     const acct = player.userId ? await A.getUser(player.userId) : null;
+    // 공격 화면 잠금 (본 오픈 후에만). custom/랜덤('')은 제외.
+    if (env.SW_OPEN === 'true' && G.EFFECT_CATALOG.includes(b.effect)) {
+      const owned = acct ? (acct.effectsAll ? G.EFFECT_CATALOG : (acct.effects || [])) : G.DEFAULT_EFFECTS;
+      if (!owned.includes(b.effect)) { await S.saveRoom(code, room); return json({ error: '잠긴 공격 화면이에요 (스타터팩에서 고르거나 충전으로 해제)' }, 403); }
+    }
     player.purchased = acct ? (acct.purchased || 0) : 0;
     const r = G.attack(room, pid, { kind: b.kind, targetId: b.targetId, customText: b.customText, effect: b.effect, customUrl });
     if (!r.ok) { player.purchased = 0; await S.saveRoom(code, room); return json({ error: reasonText(r.reason) }, 400); }
