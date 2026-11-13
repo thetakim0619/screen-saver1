@@ -6,6 +6,12 @@ let myDnd = false, curRoom = '', curName = '';
 let selectedCustomId = null, customs = [], myUid = '';
 let selectedCustomFx = 'plain'; // 커스텀 이미지 등장 연출 프리셋
 const CUST_FX = [['plain', '기본'], ['slam', '쿵!'], ['shake', '흔들'], ['glitch', '글리치'], ['rain', '우르르']];
+// ===== 내 캐릭터(펫) =====
+let myPet = { sp: 'cat', col: '#f4a13c' };
+let petPickerBuilt = false;
+const PET_SPECIES = [['cat', '고양이'], ['dog', '강아지'], ['rabbit', '토끼'], ['bear', '곰'], ['frog', '개구리'], ['chick', '병아리']];
+const PET_COLORS = ['#f4a13c', '#8bc7e8', '#ff9ec4', '#b59ae0', '#9ad17f', '#9aa0a6', '#ffd23f', '#c89b6a'];
+const PET_LABEL = Object.fromEntries(PET_SPECIES);
 function renderCustFx() {
   const box = $('custfxpick'); if (!box) return;
   if (selectedFx !== 'custom') { box.style.display = 'none'; box.innerHTML = ''; return; }
@@ -107,14 +113,98 @@ function switchRoom(code, name) {
   toast(`${code} 방으로 전환`);
 }
 
+// ===== 동물 캐릭터 SVG =====
+// state: 'idle' | 'low'(체력낮음) | 'hurt'(방금 맞음) | 'ko'(기절) | 'sleep'(자리비움)
+function petSVG(sp, col, state) {
+  sp = sp || 'cat'; col = col || '#f4a13c';
+  const dark = shade(col, -28), light = shade(col, 22);
+  // 눈
+  let eyes;
+  if (state === 'sleep') eyes = `<path d="M36 50q4 4 8 0" stroke="#2b2b2b" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M56 50q4 4 8 0" stroke="#2b2b2b" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+  else if (state === 'ko') eyes = `<path d="M36 47l8 7M44 47l-8 7" stroke="#2b2b2b" stroke-width="2.4" stroke-linecap="round"/><path d="M56 47l8 7M64 47l-8 7" stroke="#2b2b2b" stroke-width="2.4" stroke-linecap="round"/>`;
+  else if (state === 'hurt') eyes = `<path d="M35 52q5 -6 10 0" stroke="#2b2b2b" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M55 52q5 -6 10 0" stroke="#2b2b2b" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+  else eyes = `<circle cx="40" cy="51" r="3.6" fill="#2b2b2b"/><circle cx="60" cy="51" r="3.6" fill="#2b2b2b"/><circle cx="41.3" cy="49.7" r="1.2" fill="#fff"/><circle cx="61.3" cy="49.7" r="1.2" fill="#fff"/>`;
+  // 입
+  let mouth;
+  if (state === 'hurt' || state === 'ko') mouth = `<ellipse cx="50" cy="63" rx="5" ry="4" fill="#d8566a"/>`;
+  else if (state === 'low') mouth = `<path d="M45 63q5 -3 10 0" stroke="#2b2b2b" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  else mouth = `<path d="M44 61q6 6 12 0" stroke="#2b2b2b" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  const cheeks = `<circle cx="33" cy="59" r="3.4" fill="#ff9ec4" opacity=".55"/><circle cx="67" cy="59" r="3.4" fill="#ff9ec4" opacity=".55"/>`;
+  const feet = `<ellipse cx="41" cy="87" rx="6" ry="4" fill="${dark}"/><ellipse cx="59" cy="87" rx="6" ry="4" fill="${dark}"/>`;
+  const bodyPath = `M50 30c-18 0 -28 13 -28 31c0 16 12 24 28 24c16 0 28 -8 28 -24c0 -18 -10 -31 -28 -31z`;
+  const body = `<path d="${bodyPath}" fill="${col}"/>`;
+  let ears = '', extra = '', behind = '';
+  if (sp === 'cat') {
+    ears = `<path d="M28 34l-4 -18l16 10z" fill="${col}"/><path d="M72 34l4 -18l-16 10z" fill="${col}"/><path d="M30 31l-2 -10l8 6z" fill="${light}"/><path d="M70 31l2 -10l-8 6z" fill="${light}"/>`;
+    extra = `<path d="M18 56h11M18 61h11M71 56h11M71 61h11" stroke="#2b2b2b" stroke-width="1.3" opacity=".5" stroke-linecap="round"/>`;
+  } else if (sp === 'dog') {
+    behind = `<ellipse cx="24" cy="48" rx="9" ry="17" fill="${dark}"/><ellipse cx="76" cy="48" rx="9" ry="17" fill="${dark}"/>`;
+  } else if (sp === 'rabbit') {
+    behind = `<rect x="33" y="2" width="10" height="34" rx="5" fill="${col}"/><rect x="57" y="2" width="10" height="34" rx="5" fill="${col}"/><rect x="35.5" y="6" width="5" height="26" rx="2.5" fill="#ff9ec4"/><rect x="59.5" y="6" width="5" height="26" rx="2.5" fill="#ff9ec4"/>`;
+  } else if (sp === 'bear') {
+    behind = `<circle cx="28" cy="32" r="11" fill="${col}"/><circle cx="72" cy="32" r="11" fill="${col}"/><circle cx="28" cy="32" r="6" fill="${light}"/><circle cx="72" cy="32" r="6" fill="${light}"/>`;
+  } else if (sp === 'frog') {
+    // 초록 기본, 위로 튀어나온 흰 눈
+    behind = `<circle cx="36" cy="33" r="11" fill="${col}"/><circle cx="64" cy="33" r="11" fill="${col}"/><circle cx="36" cy="31" r="6.5" fill="#fff"/><circle cx="64" cy="31" r="6.5" fill="#fff"/>` +
+      (state === 'ko' ? `<path d="M31 30l6 5M37 30l-6 5" stroke="#2b2b2b" stroke-width="2.2" stroke-linecap="round"/><path d="M59 30l6 5M65 30l-6 5" stroke="#2b2b2b" stroke-width="2.2" stroke-linecap="round"/>`
+        : `<circle cx="36" cy="32" r="3" fill="#2b2b2b"/><circle cx="64" cy="32" r="3" fill="#2b2b2b"/>`);
+    // frog은 얼굴 눈 생략, 넓은 입 (상태별 변화)
+    let fm;
+    if (state === 'hurt' || state === 'ko') fm = `<ellipse cx="50" cy="64" rx="7" ry="5" fill="#d8566a"/>`;
+    else if (state === 'low') fm = `<path d="M42 65q8 -4 16 0" stroke="#2b2b2b" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+    else fm = `<path d="M40 64q10 7 20 0" stroke="#2b2b2b" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+    return wrapSVG(`${feet}${body}${behind}${cheeks}${fm}`);
+  } else if (sp === 'chick') {
+    behind = `<path d="M43 20l3.5 13h-7z" fill="${dark}"/><path d="M50 15l3.5 15h-7z" fill="${dark}"/><path d="M57 20l3.5 13h-7z" fill="${dark}"/>`;
+    extra = `<g transform="rotate(18 70 60)"><ellipse cx="70" cy="60" rx="7" ry="12" fill="${light}"/></g><path d="M50 57l-7 4l7 4z" fill="#f6a01e"/>`;
+    // chick: 부리/날개는 몸 위, 얼굴 눈 사용
+    return wrapSVG(`${feet}${behind}${body}${extra}${cheeks}<circle cx="43" cy="51" r="3.4" fill="#2b2b2b"/><circle cx="57" cy="51" r="3.4" fill="#2b2b2b"/>${state === 'ko' ? '' : `<circle cx="44" cy="49.8" r="1.1" fill="#fff"/><circle cx="58" cy="49.8" r="1.1" fill="#fff"/>`}${mouth}`);
+  }
+  return wrapSVG(`${feet}${behind}${ears}${body}${extra}${cheeks}${eyes}${mouth}`);
+}
+function wrapSVG(inner) {
+  return `<svg class="petsvg" viewBox="0 0 100 95" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+}
+function shade(hex, amt) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return hex;
+  let n = parseInt(m[1], 16);
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  r = Math.max(0, Math.min(255, r + amt)); g = Math.max(0, Math.min(255, g + amt)); b = Math.max(0, Math.min(255, b + amt));
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+let prevHp = {};
+function petState(p) {
+  if (p.hp <= 0) return 'ko';
+  if (p.dnd) return 'sleep';
+  if (p.hp <= 25) return 'low';
+  return 'idle';
+}
 function renderRoster() {
   const box = $('roster'); box.innerHTML = '';
+  const seen = {};
   for (const p of roster) {
     if (p.id === me) continue;
+    seen[p.id] = p.hp;
+    const pet = p.pet || { sp: 'cat', col: '#f4a13c' };
+    let st = petState(p);
+    const hit = prevHp[p.id] != null && p.hp < prevHp[p.id] && p.hp > 0;
+    if (hit && st !== 'ko') st = 'hurt';
     const el = document.createElement('div');
-    el.className = 'pl' + (selected === p.id ? ' sel' : '') + (p.dnd ? ' away' : '');
-    el.innerHTML = `<span class="nm">${escapeHtml(p.name)}${p.dnd ? '<span class="tag-away">자리비움</span>' : ''}</span>
-      <div class="hpbar"><i style="width:${p.hp}%"></i></div>`;
+    el.className = 'pl' + (selected === p.id ? ' sel' : '') + (p.dnd ? ' away sleeping' : '') + (p.hp <= 0 ? ' ko' : '');
+    const badge = p.hp <= 0
+      ? `<span class="shbadge"><svg viewBox="0 0 20 20"><text x="10" y="15" font-size="14" text-anchor="middle">💥</text></svg></span>`
+      : (p.dnd ? `<span class="zzz">z<sup>z</sup></span>` : '');
+    el.innerHTML = `
+      <div class="petwrap${hit ? ' justhit' : ''}">
+        ${petSVG(pet.sp, pet.col, st)}
+        ${hit ? '<span class="hitstar">✦</span>' : ''}
+        ${badge}
+      </div>
+      <div class="plinfo">
+        <span class="nm">${escapeHtml(p.name)}${p.dnd ? '<span class="tag-away">자리비움</span>' : ''}</span>
+        <div class="hpbar"><i style="width:${Math.max(0, p.hp)}%"></i></div>
+      </div>`;
     el.onclick = () => {
       if (p.dnd) { toast(`${p.name}님은 자리비움이에요`); return; }
       selected = (selected === p.id) ? null : p.id;
@@ -123,7 +213,55 @@ function renderRoster() {
     };
     box.appendChild(el);
   }
+  prevHp = seen;
 }
+
+// ===== 내 캐릭터 미리보기 + 커스텀 =====
+function renderMyPet() {
+  const prev = $('myPetPrev'); if (prev) prev.innerHTML = petSVG(myPet.sp, myPet.col, 'idle');
+  const lbl = $('myPetLabel'); if (lbl) lbl.textContent = PET_LABEL[myPet.sp] || '고양이';
+  // 피커가 열려있으면 선택 표시 갱신
+  document.querySelectorAll('#ppSpecies .pp-sp').forEach((e) => e.classList.toggle('sel', e.dataset.sp === myPet.sp));
+  document.querySelectorAll('#ppColors .pp-col').forEach((e) => e.classList.toggle('sel', e.dataset.col === myPet.col));
+}
+function buildPetPicker() {
+  if (petPickerBuilt) return; petPickerBuilt = true;
+  const sb = $('ppSpecies');
+  for (const [sp, nm] of PET_SPECIES) {
+    const el = document.createElement('div');
+    el.className = 'pp-sp'; el.dataset.sp = sp; el.title = nm;
+    el.innerHTML = petSVG(sp, myPet.col, 'idle');
+    el.onclick = () => { myPet = { ...myPet, sp }; sendPet(); renderMyPet(); refreshPickerColors(); };
+    sb.appendChild(el);
+  }
+  const cb = $('ppColors');
+  for (const col of PET_COLORS) {
+    const el = document.createElement('div');
+    el.className = 'pp-col'; el.dataset.col = col; el.style.background = col;
+    el.onclick = () => { myPet = { ...myPet, col }; sendPet(); renderMyPet(); refreshPickerColors(); };
+    cb.appendChild(el);
+  }
+}
+function refreshPickerColors() {
+  // 종류 썸네일을 현재 색으로 다시 칠함
+  document.querySelectorAll('#ppSpecies .pp-sp').forEach((e) => { e.innerHTML = petSVG(e.dataset.sp, myPet.col, 'idle'); });
+}
+let petSendT = null;
+function sendPet() {
+  clearTimeout(petSendT);
+  petSendT = setTimeout(() => {
+    window.api.cmd({ t: 'pet', sp: myPet.sp, col: myPet.col, token: authToken });
+  }, 150);
+}
+$('petEdit').onclick = () => {
+  buildPetPicker();
+  const p = $('petPick');
+  const open = p.style.display === 'none' || !p.style.display;
+  p.style.display = open ? 'block' : 'none';
+  $('petEdit').textContent = open ? '닫기' : '꾸미기';
+  if (open) { renderMyPet(); refreshPickerColors(); }
+};
+$('ppDone').onclick = () => { $('petPick').style.display = 'none'; $('petEdit').textContent = '꾸미기'; };
 
 // ===== 자리비움(방해금지) =====
 function setDndUI(on) {
@@ -157,6 +295,7 @@ window.api.onServer((m) => {
       myFree = m.you.credits;      // 매일 주는 무료 공격권
       updateCred();                // 무료 + 계정 구매분 합산 표시
       $('hp').textContent = m.you.hp;
+      if (m.you.pet) { myPet = m.you.pet; renderMyPet(); }
       if (typeof m.you.dnd === 'boolean' && m.you.dnd !== myDnd) setDndUI(m.you.dnd); // 서버값과 동기화
       if (curRoom) $('curRoom').textContent = curRoom;
       showScreen('game'); // 내 정보가 있으면 게임 화면을 띄운다

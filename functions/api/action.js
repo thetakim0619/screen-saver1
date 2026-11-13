@@ -63,6 +63,11 @@ export async function onRequest({ request, env }) {
     acct.purchased = (acct.purchased || 0) + n;
     await A.setUser(acct);
     events = [{ t: 'toast', msg: `공격권 ${n}개 구매 (계정에 적립: ${acct.purchased})` }];
+  } else if (b.t === 'pet') {
+    const r = G.setPet(room, pid, b.sp, b.col);
+    if (!r.ok) { await S.saveRoom(code, room); return json({ error: '펫 설정 실패' }, 400); }
+    if (uid) { const acct = await A.getUser(uid); if (acct) { acct.pet = r.pet; await A.setUser(acct); } } // 재입장 복원용
+    events = [];
   } else {
     return json({ error: '알 수 없는 동작' }, 400);
   }

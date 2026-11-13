@@ -24,6 +24,19 @@ const EFFECT_CATALOG = ['crack', 'glitch', 'melt', 'bsod', 'cute1', 'cute2'];
 const STARTER_N = 3;                               // 본 오픈 후 신규 사용자가 무료로 고르는 개수
 const DEFAULT_EFFECTS = ['crack', 'glitch', 'bsod']; // 비로그인 사용자가 오픈 후 쓸 수 있는 기본 세트
 
+// 펫(동물 캐릭터) — 종류와 색
+const PET_SPECIES = ['cat', 'dog', 'rabbit', 'bear', 'frog', 'chick'];
+const PET_COLORS = ['#f4a13c', '#8bc7e8', '#ff9ec4', '#b59ae0', '#9ad17f', '#9aa0a6', '#ffd23f', '#c89b6a'];
+function defaultPet() { return { sp: 'cat', col: '#f4a13c' }; }
+function setPet(room, playerId, sp, col) {
+  const p = room.players[playerId];
+  if (!p) return { ok: false };
+  if (!p.pet) p.pet = defaultPet();
+  if (sp && PET_SPECIES.includes(sp)) p.pet.sp = sp;
+  if (typeof col === 'string' && /^#[0-9a-fA-F]{6}$/.test(col)) p.pet.col = col;
+  return { ok: true, pet: p.pet };
+}
+
 const PHRASES_EASY = ['오늘도 평화', '밥은 먹었니', '퇴근하고싶다', '커피 한잔', '졸리다 진짜'];
 const PHRASES_HARD = [
   '나는 이 게임에서 질 운명이다',
@@ -50,6 +63,7 @@ function newPlayer(id, name) {
     lastRegen: Date.now(),   // 무료 공격권 자동 충전 기준 시각
     dnd: false,
     alive: true,
+    pet: defaultPet(),       // 동물 캐릭터(종류·색)
   };
 }
 
@@ -232,6 +246,7 @@ function buyCredits(room, playerId, n = 1) {
 
 export {
   CONFIG, EFFECT_CATALOG, STARTER_N, DEFAULT_EFFECTS,
+  PET_SPECIES, PET_COLORS, defaultPet, setPet,
   newPlayer, todayKey, maybeDailyReset, regenConfig, maybeRegen,
   totalCredits, spendCredit, makeMission,
   attack, resolveMission, raiseShield, setDnd, buyCredits,

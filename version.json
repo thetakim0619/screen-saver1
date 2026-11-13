@@ -1,1 +1,1 @@
-{ "shell": "1.7", "ui": "1.4.0", "note": "shell=exe 버전, ui=화면 버전. 1.7: 서버 Cloudflare 이사(pages.dev)" }
+{ "shell": "1.7", "ui": "1.5.0", "note": "shell=exe 버전, ui=화면 버전. 1.5: 동물 캐릭터(6종·색 커스텀) + 공격 시 캐릭터 반응" }

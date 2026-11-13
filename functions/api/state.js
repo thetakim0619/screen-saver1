@@ -7,6 +7,7 @@ function publicPlayer(p) {
   return {
     id: p.id, name: p.name, hp: p.hp, alive: p.alive, dnd: !!p.dnd,
     credits: p.credits, purchased: p.purchased, shield: p.shield ? p.shield.mode : null,
+    pet: p.pet || { sp: 'cat', col: '#f4a13c' },
   };
 }
 
@@ -31,7 +32,7 @@ export async function onRequest({ request, env }) {
   await S.saveRoom(code, room);
 
   return json({
-    you: { id: me.id, name: me.name, hp: me.hp, credits: me.credits, purchased: me.purchased, dnd: !!me.dnd, shieldReadyAt: me.shieldReadyAt },
+    you: { id: me.id, name: me.name, hp: me.hp, credits: me.credits, purchased: me.purchased, dnd: !!me.dnd, shieldReadyAt: me.shieldReadyAt, pet: me.pet || G.defaultPet() },
     roster: Object.values(room.players).map(publicPlayer),
     events,
   });
