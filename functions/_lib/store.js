@@ -30,7 +30,7 @@ function toClientMsg(room, e) {
       t: 'incoming', attackId: e.attackId, kind: e.kind,
       from: e.from ? (room.players[e.from]?.name || null) : null,
       reflected: !!e.reflected, purchasedAttack: !!e.purchasedAttack,
-      effect: e.effect || null, customUrl: e.customUrl || null, mission: e.mission,
+      effect: e.effect || null, customUrl: e.customUrl || null, customFx: e.customFx || null, mission: e.mission,
     };
   }
   if (e.t === 'recover') return { t: 'recover', mission: e.mission };

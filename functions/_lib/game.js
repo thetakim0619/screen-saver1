@@ -117,10 +117,13 @@ function makeMission(kind, customText) {
 let _attackSeq = 0;
 function nextAttackId() { _attackSeq += 1; return 'atk_' + Date.now().toString(36) + '_' + _attackSeq; }
 
-function attack(room, attackerId, { kind, targetId, customText, effect, customUrl }, now = Date.now()) {
+const CUSTOM_FX = ['plain', 'slam', 'shake', 'glitch', 'rain']; // 커스텀 이미지 등장 연출 프리셋
+
+function attack(room, attackerId, { kind, targetId, customText, effect, customUrl, customFx }, now = Date.now()) {
   const useCustom = effect === 'custom' && customUrl;
   const fx = useCustom ? 'custom' : (EFFECT_CATALOG.includes(effect) ? effect : null);
   const cUrl = useCustom ? customUrl : null;
+  const cFx = useCustom ? (CUSTOM_FX.includes(customFx) ? customFx : 'plain') : null;
   const attacker = room.players[attackerId];
   if (!attacker) return { ok: false, reason: 'no_attacker' };
   maybeDailyReset(attacker, now);
@@ -157,7 +160,7 @@ function attack(room, attackerId, { kind, targetId, customText, effect, customUr
         const atkId = nextAttackId();
         events.push({
           t: 'incoming', attackId: atkId, victim: attacker.id, from: v.id, kind,
-          reflected: true, purchasedAttack: spent.purchased, effect: fx, customUrl: cUrl, mission,
+          reflected: true, purchasedAttack: spent.purchased, effect: fx, customUrl: cUrl, customFx: cFx, mission,
         });
         events.push({ t: 'reflected', by: v.id, to: attacker.id });
         continue;
@@ -169,7 +172,7 @@ function attack(room, attackerId, { kind, targetId, customText, effect, customUr
     events.push({
       t: 'incoming', attackId: atkId, victim: v.id,
       from: kind === 'target' ? attacker.id : null, kind,
-      purchasedAttack: spent.purchased, effect: fx, customUrl: cUrl, mission,
+      purchasedAttack: spent.purchased, effect: fx, customUrl: cUrl, customFx: cFx, mission,
     });
   }
 

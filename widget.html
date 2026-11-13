@@ -108,6 +108,9 @@
   .sp-btn { width:100%; padding:6px; font-size:10px; background:var(--red); color:#fff; border:none; border-radius:5px; cursor:pointer; }
   .sp-btn:disabled { opacity:.45; cursor:default; }
   .custhint { font-size:9px; color:var(--mut); line-height:1.4; padding:2px 0; }
+  .custfxpick { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:6px; }
+  .custfxpick .cf { font-size:9px; padding:3px 7px; border-radius:5px; background:#15161a; border:1px solid var(--line); color:var(--mut); cursor:pointer; }
+  .custfxpick .cf.sel { border-color:var(--red); color:#fff; }
   #toast { position:absolute; left:9px; right:9px; bottom:8px; background:#000; border:1px solid var(--line);
            border-radius:7px; padding:7px 9px; font-size:10px; opacity:0; transition:.2s; pointer-events:none; }
   #toast.show { opacity:1; }
@@ -218,6 +221,7 @@
         <button class="sp-btn" id="spConfirm" disabled>선택 완료 (0/3)</button>
       </div>
       <div class="custpick" id="custpick"></div>
+      <div class="custfxpick" id="custfxpick" style="display:none"></div>
       <input type="file" id="custFile" accept="image/*" style="display:none" />
       <input class="custom" id="customText" placeholder="지정 공격 문장 (비우면 랜덤)" maxlength="40" />
       <div class="btns">

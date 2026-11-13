@@ -4,6 +4,20 @@ let me = null, roster = [], selected = null, config = null, selectedFx = '';
 let myFree = 0, acctPurchased = 0, myCred = 0;
 let myDnd = false, curRoom = '', curName = '';
 let selectedCustomId = null, customs = [], myUid = '';
+let selectedCustomFx = 'plain'; // 커스텀 이미지 등장 연출 프리셋
+const CUST_FX = [['plain', '기본'], ['slam', '쿵!'], ['shake', '흔들'], ['glitch', '글리치'], ['rain', '우르르']];
+function renderCustFx() {
+  const box = $('custfxpick'); if (!box) return;
+  if (selectedFx !== 'custom') { box.style.display = 'none'; box.innerHTML = ''; return; }
+  box.style.display = 'flex'; box.innerHTML = '';
+  for (const [key, label] of CUST_FX) {
+    const b = document.createElement('div');
+    b.className = 'cf' + (selectedCustomFx === key ? ' sel' : '');
+    b.textContent = label;
+    b.onclick = () => { selectedCustomFx = key; renderCustFx(); };
+    box.appendChild(b);
+  }
+}
 const PAYMENTS_ON = false; // 사업자 전까지 결제 숨김. 나중에 true로.
 function updateCred() { myCred = myFree + acctPurchased; $('cred').textContent = myCred; }
 const FX_NAMES = { '': '랜덤', crack: '유리 깨짐', glitch: '글리치', melt: '녹아내림', bsod: '블루스크린', cute1: '귀염 스티커', cute2: '스티커 비' };
@@ -202,6 +216,7 @@ document.querySelectorAll('#fxpick .fxitem').forEach((el) => {
     selectedCustomId = null;
     document.querySelectorAll('#fxpick .fxitem').forEach((x) => x.classList.toggle('sel', x === el));
     renderCustpick();
+    renderCustFx();
   };
 });
 function fxLabel() { return selectedFx === 'custom' ? '내 화면' : (FX_NAMES[selectedFx] || '랜덤'); }
@@ -299,7 +314,8 @@ function selectCustom(id) {
   selectedFx = 'custom'; selectedCustomId = id;
   document.querySelectorAll('#fxpick .fxitem').forEach((x) => x.classList.remove('sel'));
   renderCustpick();
-  toast('내 화면 선택됨 · 지정 공격으로 발사');
+  renderCustFx();
+  toast('내 화면 선택됨 · 연출 고르고 지정 공격으로 발사');
 }
 async function delCustom(id) {
   try {
@@ -351,7 +367,7 @@ $('atkAll').onclick = () => {
   if (myDnd) return toast('자리비움 중엔 공격할 수 없어요');
   if (myCred < 1) return toast('공격권이 없습니다');
   if (!customOk()) return;
-  window.api.cmd({ t: 'attack', kind: 'broadcast', effect: selectedFx, customId: selectedFx === 'custom' ? selectedCustomId : undefined, token: authToken });
+  window.api.cmd({ t: 'attack', kind: 'broadcast', effect: selectedFx, customId: selectedFx === 'custom' ? selectedCustomId : undefined, customFx: selectedFx === 'custom' ? selectedCustomFx : undefined, token: authToken });
   $('cred').textContent = Math.max(0, myCred - 1); // 즉시 반영(곧 서버값으로 갱신)
   setTimeout(refreshAcct, 600);                    // 구매분 썼을 수 있으니 갱신
   toast(`전체 공격 보냄 → (${fxLabel()})`);
@@ -363,7 +379,7 @@ $('atkOne').onclick = () => {
   if (myCred < 1) return toast('공격권이 없습니다');
   if (!customOk()) return;
   const name = (roster.find((p) => p.id === selected) || {}).name || '상대';
-  window.api.cmd({ t: 'attack', kind: 'target', targetId: selected, customText: $('customText').value.trim(), effect: selectedFx, customId: selectedFx === 'custom' ? selectedCustomId : undefined, token: authToken });
+  window.api.cmd({ t: 'attack', kind: 'target', targetId: selected, customText: $('customText').value.trim(), effect: selectedFx, customId: selectedFx === 'custom' ? selectedCustomId : undefined, customFx: selectedFx === 'custom' ? selectedCustomFx : undefined, token: authToken });
   $('cred').textContent = Math.max(0, myCred - 1);
   setTimeout(refreshAcct, 600);
   toast(`${name}에게 공격 보냄 → (${fxLabel()})`);

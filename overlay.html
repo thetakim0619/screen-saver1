@@ -65,6 +65,12 @@
   video.fximg { width:100%; height:100%; object-fit:cover; }
   .fxcanvas { width:100%; height:100%; object-fit:cover; display:block; }
   #fx .custimg { background-color:#000; background-size:contain; background-position:center; background-repeat:no-repeat; }
+  /* 커스텀 이미지 등장 연출 프리셋 */
+  #fx .custimg.cfx-slam { animation: cfSlam .5s cubic-bezier(.2,1.5,.4,1) both, fxshake .45s .5s 2; transform-origin:center; }
+  @keyframes cfSlam { 0%{transform:scale(2.6);opacity:0} 12%{opacity:1} 55%{transform:scale(.93)} 78%{transform:scale(1.04)} 100%{transform:scale(1)} }
+  #fx .custimg.cfx-shake { animation: fxshake .3s linear infinite; }
+  #fx .custimg.cfx-glitch { animation: gJit .26s steps(2) infinite, gFlick .9s steps(1) infinite; }
+  #fx .imgdrop { position:absolute; top:-15%; background-size:contain; background-position:center; background-repeat:no-repeat; will-change:top,transform; }
 
   /* ===== 귀여운 연출 (스티커 폭탄 / 뿅 캐릭터) ===== */
   .cute { position:absolute; inset:0; pointer-events:none; overflow:hidden; }

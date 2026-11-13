@@ -39,7 +39,7 @@ export async function onRequest({ request, env }) {
       if (!owned.includes(b.effect)) { await S.saveRoom(code, room); return json({ error: '잠긴 공격 화면이에요 (스타터팩에서 고르거나 충전으로 해제)' }, 403); }
     }
     player.purchased = acct ? (acct.purchased || 0) : 0;
-    const r = G.attack(room, pid, { kind: b.kind, targetId: b.targetId, customText: b.customText, effect: b.effect, customUrl });
+    const r = G.attack(room, pid, { kind: b.kind, targetId: b.targetId, customText: b.customText, effect: b.effect, customUrl, customFx: b.customFx });
     if (!r.ok) { player.purchased = 0; await S.saveRoom(code, room); return json({ error: reasonText(r.reason) }, 400); }
     if (acct) { acct.purchased = player.purchased; await A.setUser(acct); }
     player.purchased = 0;

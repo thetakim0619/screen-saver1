@@ -167,17 +167,39 @@ function buildCute(host, kind) {
   return wrap;
 }
 
-function playEffect(kind, customUrl) {
+function buildImageRain(url) {
+  const host = document.createElement('div'); host.className = 'fximg'; host.style.background = 'rgba(0,0,0,.55)';
+  for (let i = 0; i < 36; i++) {
+    const s = document.createElement('div'); s.className = 'imgdrop';
+    const sz = 7 + Math.random() * 10;
+    s.style.width = sz + 'vw'; s.style.height = sz + 'vw';
+    s.style.left = (Math.random() * 96) + 'vw';
+    s.style.backgroundImage = `url("${url}")`;
+    s.style.setProperty('--spin', (Math.random() * 720 - 360) + 'deg');
+    const dur = 2.2 + Math.random() * 2.2, delay = -Math.random() * 4;
+    s.style.animation = `cFall ${dur}s linear ${delay}s infinite`;
+    host.appendChild(s);
+  }
+  return host;
+}
+
+function playEffect(kind, customUrl, customFx) {
   const fx = $('fx'); stopFx(); fx.innerHTML = ''; fx.classList.remove('shake'); fx.classList.add('show');
   setActive(true);
   $('escHint').style.display = 'block';
   if (kind === 'cute1' || kind === 'cute2') {
     fx.appendChild(buildCute(fx, kind));
   } else if (kind === 'custom' && customUrl) {
-    // 공격자가 올린 이미지를 화면 전체에 띄운다(화면 점령)
-    const d = document.createElement('div'); d.className = 'fximg custimg';
-    d.style.backgroundImage = `url("${customUrl}")`;
-    fx.appendChild(d);
+    // 공격자가 올린 이미지를 화면 전체에 띄운다(화면 점령). customFx = 등장 연출 프리셋.
+    const pre = customFx || 'plain';
+    if (pre === 'rain') {
+      fx.appendChild(buildImageRain(customUrl));
+    } else {
+      const d = document.createElement('div');
+      d.className = 'fximg custimg' + (pre !== 'plain' ? ' cfx-' + pre : '');
+      d.style.backgroundImage = `url("${customUrl}")`;
+      fx.appendChild(d);
+    }
   } else if (kind === 'bsod') {
     fx.innerHTML = `<div class="bsod"><div class="face">:(</div>
       <div>문제가 발생하여 화면을 복구하는 중입니다.</div>
@@ -236,7 +258,7 @@ window.api.onServer((m) => {
     if (isDnd()) { setActive(false); return; } // 자리비움: 서버 반영 전 날아온 공격도 무시
     startMission(m);
   }
-  else if (m.t === 'hit') playEffect((cur && cur.effect) ? cur.effect : m.effect, cur && cur.customUrl); // 공격자가 고른 연출/이미지 우선
+  else if (m.t === 'hit') playEffect((cur && cur.effect) ? cur.effect : m.effect, cur && cur.customUrl, cur && cur.customFx); // 공격자가 고른 연출/이미지/프리셋 우선
   else if (m.t === 'recover') startRecover(m);
 });
 window.api.onForceClear(() => clearAll());
