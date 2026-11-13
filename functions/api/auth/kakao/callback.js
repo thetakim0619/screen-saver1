@@ -24,7 +24,12 @@ export async function onRequest({ request, env }) {
     const url = new URL(request.url);
     const code = url.searchParams.get('code');
     const state = url.searchParams.get('state');
-    if (!code || !state) return htmlResp(page({ t: '로그인 실패', s: '잘못된 요청입니다.' }), 400);
+    if (!code || !state) {
+      const err = url.searchParams.get('error');
+      const errDesc = url.searchParams.get('error_description');
+      const detail = err ? `${err}: ${errDesc || ''}` : `code=${code ? 'O' : 'X'}, state=${state ? 'O' : 'X'}`;
+      return htmlResp(page({ t: '로그인 실패', s: '잘못된 요청입니다. (' + detail + ')' }), 400);
+    }
 
     const key = env.KAKAO_REST_API_KEY;
     const secret = env.KAKAO_CLIENT_SECRET; // 선택
