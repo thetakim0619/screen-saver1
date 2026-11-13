@@ -25,6 +25,7 @@ export async function onRequest({ request, env }) {
     room.players[id] = player;
   }
   G.maybeDailyReset(player);
+  G.maybeRegen(player, G.regenConfig(env));
   await S.saveRoom(code, room);
 
   return json({ you: { id: player.id, name: player.name }, config: G.CONFIG });

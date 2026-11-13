@@ -21,6 +21,8 @@ export async function onRequest({ request, env }) {
 
   const uid = await A.resolveToken(b.token);
   player.userId = uid || undefined; // 소유권은 현재 토큰을 따라간다(로그아웃 시 해제)
+  G.maybeDailyReset(player);
+  G.maybeRegen(player, G.regenConfig(env)); // 행동 직전 무료 공격권 자동 충전 반영
 
   let events = [];
   if (b.t === 'attack') {

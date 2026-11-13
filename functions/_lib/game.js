@@ -14,6 +14,9 @@ const CONFIG = {
   MISSION_BROADCAST_SEC: 6,
   MISSION_TARGET_SEC: 4,
   MISSION_RECOVER_SEC: 6,
+  REGEN_HOURS: 3,    // 무료 공격권 자동 충전 간격(시간)
+  REGEN_AMOUNT: 2,   // 간격마다 충전되는 개수 (0이면 끔)
+  REGEN_CAP: 5,      // 자동 충전으로 쌓이는 무료 공격권 상한
 };
 
 // 공격 화면(효과) 카탈로그 — 스타터팩에서 고르는 대상
@@ -44,9 +47,36 @@ function newPlayer(id, name) {
     shield: null,
     shieldReadyAt: 0,
     lastDailyReset: todayKey(),
+    lastRegen: Date.now(),   // 무료 공격권 자동 충전 기준 시각
     dnd: false,
     alive: true,
   };
+}
+
+// 환경변수로 자동 충전 설정을 덮어쓴다(없으면 CONFIG 기본값).
+function regenConfig(env) {
+  env = env || {};
+  const num = (v, d) => (v != null && v !== '' && !isNaN(Number(v)) ? Number(v) : d);
+  return {
+    hours: num(env.SW_REGEN_HOURS, CONFIG.REGEN_HOURS),
+    amount: num(env.SW_REGEN_AMOUNT, CONFIG.REGEN_AMOUNT),
+    cap: num(env.SW_REGEN_CAP, CONFIG.REGEN_CAP),
+  };
+}
+
+// 시간 경과에 따라 무료 공격권을 채운다(상한까지). 구매 공격권은 건드리지 않는다.
+function maybeRegen(p, rc, now = Date.now()) {
+  if (!rc || rc.amount <= 0 || rc.hours <= 0) return false;
+  if (p.lastRegen == null) p.lastRegen = now;
+  const interval = rc.hours * 3600000;
+  if (p.credits >= rc.cap) { p.lastRegen = now; return false; } // 가득이면 타이머만 리셋
+  const elapsed = now - p.lastRegen;
+  if (elapsed < interval) return false;
+  const ticks = Math.floor(elapsed / interval);
+  const before = p.credits;
+  p.credits = Math.min(rc.cap, p.credits + ticks * rc.amount);
+  p.lastRegen += ticks * interval; // 쓴 간격만큼만 당겨 나머지 시간 보존
+  return p.credits > before;
 }
 
 function pick(arr, rnd = Math.random) { return arr[Math.floor(rnd() * arr.length)]; }
@@ -195,7 +225,7 @@ function buyCredits(room, playerId, n = 1) {
 
 export {
   CONFIG, EFFECT_CATALOG, STARTER_N, DEFAULT_EFFECTS,
-  newPlayer, todayKey, maybeDailyReset,
+  newPlayer, todayKey, maybeDailyReset, regenConfig, maybeRegen,
   totalCredits, spendCredit, makeMission,
   attack, resolveMission, raiseShield, setDnd, buyCredits,
 };

@@ -1,4 +1,5 @@
 // GET /api/state?room=CODE&player=ID -> {you, roster, events}
+import * as G from '../_lib/game.js';
 import { makeStore } from '../_lib/store.js';
 import { json, preflight } from '../_lib/http.js';
 
@@ -21,6 +22,10 @@ export async function onRequest({ request, env }) {
   const room = await S.loadRoom(code);
   const me = room.players[pid];
   if (!me) return json({ error: '방에 없는 플레이어', gone: true }, 404);
+
+  // 자정 충전 + 시간당 무료 충전 반영 (폴링 때마다 최신 상태로)
+  G.maybeDailyReset(me);
+  G.maybeRegen(me, G.regenConfig(env));
 
   const events = S.drainInbox(room, pid);
   await S.saveRoom(code, room);
