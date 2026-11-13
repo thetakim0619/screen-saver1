@@ -162,7 +162,7 @@ function buildCute(host, kind) {
       s.style.setProperty('--r', (Math.random() * 60 - 30) + 'deg'); s.style.animationDelay = (Math.random() * 0.9) + 's';
       s.innerHTML = stickerSVG(CUTE_SHAPES[i % CUTE_SHAPES.length], CUTE_COLORS[i % CUTE_COLORS.length]); wrap.appendChild(s);
     }
-    const b = document.createElement('div'); b.className = 'cbubble'; b.textContent = '당했다!'; wrap.appendChild(b);
+    const b = document.createElement('div'); b.className = 'cbubble'; b.textContent = 'ㅋㅋ 이것도 못하냐'; wrap.appendChild(b);
   }
   return wrap;
 }
