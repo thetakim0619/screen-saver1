@@ -1,1 +1,1 @@
-{ "shell": "1.6", "ui": "1.4.0", "note": "shell=exe 버전, ui=화면 버전. 1.4.0: 자리비움/종료버튼/방전환" }
+{ "shell": "1.7", "ui": "1.4.0", "note": "shell=exe 버전, ui=화면 버전. 1.7: 서버 Cloudflare 이사(pages.dev)" }
